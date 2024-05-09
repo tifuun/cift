@@ -13,4 +13,5 @@ dist
 *.bak
 *.old
 *.log
+venv
 
