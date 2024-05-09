@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cift"
+version = "0.0.0"
+description = """Caltech Intermediate Form parser in pure Python"""
+authors = [
+	{name = "maybetree", email = "no@email.com"}
+	]
+license = { text = "I haven't decided yet" }
+readme = "README.md"
+classifiers = [
+	'Programming Language :: Python :: 3',
+	]
+requires-python = ">=3"
+dependencies = [
+	]
+
+#[tool.setuptools.packages.find]
+#include = [ "pycif", "pycif.*" ]
+

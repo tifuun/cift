@@ -1,0 +1,16 @@
+__pycache__
+*.py[cod]
+*.egg-info
+build
+dist
+.clirope
+*.sw*
+*.vim
+*.obsession*
+/*.cif
+/*.pdf
+/*.svg
+*.bak
+*.old
+*.log
+
