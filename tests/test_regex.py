@@ -97,6 +97,30 @@ class TestRegex(unittest.TestCase, RegexTester):
             "BOX;",
             )
 
+    def test_regex_polygon(self):
+        self.assertMatches(
+            cf.re.polygon,
+            "P 10 10 20 30;",
+            (' 10 10 20 30', )
+            )
+
+        self.assertMatches(
+            cf.re.polygon,
+            "P 10 10 10 10 20 30;",
+            (' 10 10 10 10 20 30', )
+            )
+
+        self.assertMatches(
+            cf.re.polygon,
+            "   P 10  10   20  30 10 10  ; ",
+            (" 10  10   20  30 10 10", )
+            )
+
+        self.assertNotMatches(
+            cf.re.polygon,
+            "   P 10  10   20  30 10 10 10 ; ",
+            )
+
 
 if __name__ == '__main__':
     unittest.main()
