@@ -52,3 +52,7 @@ rout_call = re.compile(
     r"\s*;\s*$"
     )
 
+rout_transform = re.compile(
+    r"([TR])\s+(-?\d+)\s+(-?\d+)"
+    )
+

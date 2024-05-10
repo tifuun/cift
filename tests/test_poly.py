@@ -18,14 +18,14 @@ class TestPoly(unittest.TestCase):
         self.assertEqual(
             parser.layers,
             {
-                'Ltest': {
+                'Ltest': [
                     (
                         (10, 10),
                         (10, 20),
                         (30, 30),
                         (10, 30),
                         ),
-                    }
+                    ]
                 },
             )
 
@@ -41,7 +41,7 @@ class TestPoly(unittest.TestCase):
         self.assertEqual(
             parser.layers,
             {
-                'Ltest': {
+                'Ltest': [
                     (
                         (10, 10),
                         (10, 20),
@@ -54,7 +54,7 @@ class TestPoly(unittest.TestCase):
                         (30, 30),
                         (10, 30),
                         ),
-                    }
+                    ]
                 },
             )
 
@@ -73,7 +73,7 @@ class TestPoly(unittest.TestCase):
         self.assertEqual(
             parser.layers,
             {
-                'Lone': {
+                'Lone': [
                     (
                         (10, 10),
                         (10, 20),
@@ -86,15 +86,15 @@ class TestPoly(unittest.TestCase):
                         (30, 30),
                         (10, 30),
                         ),
-                    },
-                'Ltwo': {
+                    ],
+                'Ltwo': [
                     (
                         (50, 20),
                         (40, 10),
                         (30, 30),
                         (10, 30),
                         ),
-                    }
+                    ]
                 },
             )
 

@@ -3,7 +3,7 @@ from collections import defaultdict
 import cift as cf
 
 def to_int(string):
-    return int(string.lstrip('0'))
+    return int(string.lstrip('0') or '0')
 
 @dataclass
 class Frame:
@@ -21,7 +21,7 @@ class Parser:
     _stack: list[Frame]
 
     def __init__(self) -> None:
-        self.layers = defaultdict(set)
+        self.layers = defaultdict(list)
 
         self._stack = [Frame(
             layer=None,
@@ -107,7 +107,7 @@ class Parser:
         x2 = xpos + width / 2
         y2 = ypos + length / 2
 
-        self.layers[self._frame.layer].add((
+        self.layers[self._frame.layer].append((
             (x1, y1),
             (x2, y1),
             (x2, y2),
@@ -120,7 +120,7 @@ class Parser:
         coords = tuple(map(to_int, cf.re.points.findall(match.groups()[0])))
         points = tuple(zip(coords[0::2], coords[1::2]))
 
-        self.layers[self._frame.layer].add(points)
+        self.layers[self._frame.layer].append(points)
 
     def _handle_rout_start(self, match):
         # TODO redefinition

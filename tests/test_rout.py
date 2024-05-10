@@ -21,14 +21,14 @@ class TestRout(unittest.TestCase):
         self.assertEqual(
             parser.layers,
             {
-                'Ltest': {
+                'Ltest': [
                     (
                         (10, 10),
                         (10, 20),
                         (30, 30),
                         (10, 30),
                         ),
-                    }
+                    ]
                 },
             )
 
@@ -48,22 +48,22 @@ class TestRout(unittest.TestCase):
         self.assertEqual(
             parser.layers,
             {
-                'Lone': {
+                'Lone': [
                     (
                         (10, 10),
                         (10, 20),
                         (30, 30),
                         (10, 30),
                         ),
-                    },
-                'Ltwo': {
+                    ],
+                'Ltwo': [
                     (
                         (10, 10),
                         (10, 20),
                         (30, 30),
                         (10, 30),
                         ),
-                    }
+                    ]
                 },
             )
 
@@ -72,40 +72,48 @@ class TestRout(unittest.TestCase):
             )
         parser.parse(
             "DS 1;\n"
+            "   L Lesp;\n"
             "   P 10 10 10 20 30 30 10 30;\n"
             "DF;\n"
             "DS 2;\n"
-                "C 1;\n"
+            "   P 20 20 0 10 10 0;\n"
+            "   C 1;\n"
             "DF;\n"
             "DS 3;\n"
-                "C 1;\n"
-                "C 2;\n"
+            "   C 1;\n"
+            "   C 2;\n"
             "DF;\n"
             "L Lone;\n"
-            "C 1;\n"
+            "C 3;\n"
             "L Ltwo;\n"
-            "C 1;\n"
+            "C 3;\n"
             "E\n"
             )
         self.assertEqual(
             parser.layers,
             {
-                'Lone': {
+                'Lesp': [
                     (
                         (10, 10),
                         (10, 20),
                         (30, 30),
                         (10, 30),
                         ),
-                    },
-                'Ltwo': {
+                    ] * 4,  # <-- pay attention here
+                'Lone': [
                     (
-                        (10, 10),
-                        (10, 20),
-                        (30, 30),
-                        (10, 30),
+                        (20, 20),
+                        (0, 10),
+                        (10, 0),
                         ),
-                    }
+                    ],
+                'Ltwo': [
+                    (
+                        (20, 20),
+                        (0, 10),
+                        (10, 0),
+                        ),
+                    ],
                 },
             )
 
