@@ -1,6 +1,9 @@
 # CIFT
 Caltech Intermediate Form parser in pure Python
 
+- github: <https://github.com/maybeetree/cift>
+- pypi: <https://pypi.org/project/cift/0.0.1/>
+
 ## Under construction
 
 Currently, CIFT is a utility for use in unit tests of RAIMAD,

@@ -111,11 +111,11 @@ class TestRout(unittest.TestCase):
         parser = cf.Parser(
             )
         parser.parse(
-            "DS 1;\n"
+            "DS 1 1 1;\n"
             "    L Lone;\n"
             "    P 0 0 0 10 10 0;\n"
             "DF;\n"
-            "DS 2;\n"
+            "DS 2 1 1;\n"
             "    C 1 R 0 -1 T 2 3;\n"
             "DF;\n"
             "C 2;\n"

@@ -35,6 +35,7 @@ rout_start = re.compile(
     r"^\s*"
     r"DS"
     r"\s+(-?\d+)"
+    r"(?:\s+(-?\d+)\s+(-?\d+))?"
     r"\s*;\s*$"
     )
 
