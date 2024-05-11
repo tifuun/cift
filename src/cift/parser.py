@@ -5,11 +5,69 @@ import cift as cf
 def to_int(string):
     return int(string.lstrip('0') or '0')
 
+class Transform:
+    def __init__(self):
+        self.next = None
+
+    def append(self, new):
+        if self.next is None:
+            self.next = new
+        else:
+            self.next.append(new)
+
+    def transform_point(self, x, y):
+        if self.next is not None:
+            x, y = self.next.transform_point(x, y)
+
+        return x, y
+
+    def transform_points(self, points):
+        return tuple(self.transform_point(*point) for point in points)
+
+class Rotate(Transform):
+    def __init__(self, rx, ry):
+        super().__init__()
+
+        magnitude = (rx ** 2 + ry ** 2) ** (1 / 2)
+        self.ux = rx / magnitude
+        self.uy = ry / magnitude
+
+    def transform_point(self, x, y):
+        x, y = map(int, (
+            x * self.ux - y * self.uy,
+            x * self.uy + y * self.ux
+            ))
+        # TODO this is not correct, as far as I understand,
+        # the result of a rotation in CIF does not need to be
+        # quantized to the grid. So this should be float.
+
+        if self.next is not None:
+            x, y = self.next.transform_point(x, y)
+
+        return x, y
+
+class Translate(Transform):
+    def __init__(self, x, y):
+        super().__init__()
+
+        self.x = x
+        self.y = y
+
+    def transform_point(self, x, y):
+        x += self.x
+        y += self.y
+
+        if self.next is not None:
+            x, y = self.next.transform_point(x, y)
+
+        return x, y
+
 @dataclass
 class Frame:
     layer: str | None
     line: int
     rout_num: int | None
+    transform: Transform
 
 class Parser:
     """
@@ -26,7 +84,8 @@ class Parser:
         self._stack = [Frame(
             layer=None,
             line=0,
-            rout_num=None
+            rout_num=None,
+            transform=Transform()
             )]
 
         self._this_rout = None
@@ -107,18 +166,23 @@ class Parser:
         x2 = xpos + width / 2
         y2 = ypos + length / 2
 
-        self.layers[self._frame.layer].append((
+        points = (
             (x1, y1),
             (x2, y1),
             (x2, y2),
             (x1, y2),
-            ))
+            )
+
+        points = self._frame.transform.transform_points(points)
+
+        self.layers[self._frame.layer].append(points)
 
     def _handle_polygon(self, match):
         self._assert_layer()
 
         coords = tuple(map(to_int, cf.re.points.findall(match.groups()[0])))
         points = tuple(zip(coords[0::2], coords[1::2]))
+        points = self._frame.transform.transform_points(points)
 
         self.layers[self._frame.layer].append(points)
 
@@ -153,17 +217,26 @@ class Parser:
 
     def _handle_rout_call(self, match):
         rout_num, rout_transform = match.groups()
+        transform = Transform()
         if rout_transform:
-            raise NotImplementedError(
-                "Sorry, I can't handle subroutine transformations yet."
-                )
+            for match in cf.re.rout_transform.findall(rout_transform):
+                kind, x, y = match
+                x = to_int(x)
+                y = to_int(y)
+                if kind == 'T':
+                    transform.append(Translate(x, y))
+                elif kind == 'R':
+                    transform.append(Rotate(x, y))
+                else:
+                    assert False
 
         rout_num = to_int(rout_num)
 
         self._stack.append(Frame(
             line=self.routs_start_lines[rout_num],
-            layer=self._frame.layer,
-            rout_num=rout_num
+            layer=None,
+            rout_num=rout_num,
+            transform=transform
             ))
 
         for line in self.routs_lines[rout_num]:

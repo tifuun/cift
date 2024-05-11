@@ -37,12 +37,12 @@ class TestRout(unittest.TestCase):
             )
         parser.parse(
             "DS 1;\n"
+            "   L Lone;\n"
             "   P 10 10 10 20 30 30 10 30;\n"
             "DF;\n"
-            "L Lone;\n"
-            "C 1;\n"
             "L Ltwo;\n"
             "C 1;\n"
+            "P 10 10 0 10 10 0;\n"
             "E\n"
             )
         self.assertEqual(
@@ -59,9 +59,8 @@ class TestRout(unittest.TestCase):
                 'Ltwo': [
                     (
                         (10, 10),
-                        (10, 20),
-                        (30, 30),
-                        (10, 30),
+                        (0, 10),
+                        (10, 0),
                         ),
                     ]
                 },
@@ -72,10 +71,11 @@ class TestRout(unittest.TestCase):
             )
         parser.parse(
             "DS 1;\n"
-            "   L Lesp;\n"
+            "   L Lone;\n"
             "   P 10 10 10 20 30 30 10 30;\n"
             "DF;\n"
             "DS 2;\n"
+            "   L Ltwo;\n"
             "   P 20 20 0 10 10 0;\n"
             "   C 1;\n"
             "DF;\n"
@@ -83,35 +83,56 @@ class TestRout(unittest.TestCase):
             "   C 1;\n"
             "   C 2;\n"
             "DF;\n"
-            "L Lone;\n"
-            "C 3;\n"
-            "L Ltwo;\n"
             "C 3;\n"
             "E\n"
             )
         self.assertEqual(
             parser.layers,
             {
-                'Lesp': [
+                'Lone': [
                     (
                         (10, 10),
                         (10, 20),
                         (30, 30),
                         (10, 30),
                         ),
-                    ] * 4,  # <-- pay attention here
-                'Lone': [
+                    ] * 2,  # <-- pay attention here
+                'Ltwo': [
                     (
                         (20, 20),
                         (0, 10),
                         (10, 0),
                         ),
                     ],
-                'Ltwo': [
+                },
+            )
+
+    def test_rout_transform(self):
+        parser = cf.Parser(
+            )
+        parser.parse(
+            "DS 1;\n"
+            "    L Lone;\n"
+            "    P 0 0 0 10 10 0;\n"
+            "DF;\n"
+            "DS 2;\n"
+            "    C 1 R 0 -1 T 2 3;\n"
+            "DF;\n"
+            "C 2;\n"
+            "E\n"
+            )
+        # So apparently subroutine call transforms at the toplevel get
+        # ignored? Is this a klayout bug/feature?
+        # am I dumb?
+        # Regardless, this is why this test uses two subroutines.
+        self.assertEqual(
+            parser.layers,
+            {
+                'Lone': [
                     (
-                        (20, 20),
-                        (0, 10),
-                        (10, 0),
+                        (0 + 2, 0 + 3),
+                        (10 + 2, 0 + 3),
+                        (0 + 2, -10 + 3),
                         ),
                     ],
                 },
