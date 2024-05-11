@@ -36,3 +36,11 @@ Think of putting a CIF file into a sieve
 and letting the syntax crystallize into grains of sand
 that fall away to reveal the geometries it represents.
 
+## License
+
+You should have received a copy of the
+CC0 Public Domain Dedication along with this software.
+If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
+
+Future versions may switch to a difference license.
+
