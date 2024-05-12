@@ -134,6 +134,9 @@ class Parser:
         elif (match := cf.re.polygon.match(line)):
             self._handle_polygon(match)
 
+        elif (match := cf.re.comment.match(line)):
+            pass
+
         elif line.startswith('E'):
             # TODO
             pass

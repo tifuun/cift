@@ -57,3 +57,7 @@ rout_transform = re.compile(
     r"([TR])\s+(-?\d+)\s+(-?\d+)"
     )
 
+comment = re.compile(
+    r"^\s*\(.*\)\s*$"
+    )
+
