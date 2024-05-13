@@ -162,18 +162,30 @@ class Parser:
     def _handle_box(self, match):
         self._assert_layer()
 
-        length, width, xpos, ypos = map(to_int, match.groups())
+        width, height, xpos, ypos = map(to_int, match.groups()[:4])
+        rot_x, rot_y = match.groups()[4:]
 
-        x1 = xpos - width / 2
-        y1 = ypos - length / 2
-        x2 = xpos + width / 2
-        y2 = ypos + length / 2
+        x1 = -width / 2
+        y1 = -height / 2
+        x2 = width / 2
+        y2 = height / 2
 
         points = (
             (x1, y1),
             (x2, y1),
             (x2, y2),
             (x1, y2),
+            )
+
+        if rot_x is not None:
+            assert rot_y is not None
+            rot_x = to_int(rot_x)
+            rot_y = to_int(rot_y)
+            points = Rotate(rot_x, rot_y).transform_points(points)
+
+        points = (
+            (point[0] + xpos, point[1] + ypos)
+            for point in points
             )
 
         points = self._frame.transform.transform_points(points)

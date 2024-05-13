@@ -5,7 +5,9 @@ import unittest
 
 import cift as cf
 
-class TestPoly(unittest.TestCase):
+from .utils import PrettyEqual
+
+class TestPoly(unittest.TestCase, PrettyEqual):
 
     def test_single_poly(self):
         parser = cf.Parser(
@@ -15,7 +17,7 @@ class TestPoly(unittest.TestCase):
             "P 10 10 10 20 30 30 10 30;\n"
             "E\n"
             )
-        self.assertEqual(
+        self.assertPrettyEqual(
             parser.layers,
             {
                 'Ltest': [
@@ -38,7 +40,7 @@ class TestPoly(unittest.TestCase):
             "P 50 20 40 10 30 30 10 30;\n"
             "E\n"
             )
-        self.assertEqual(
+        self.assertPrettyEqual(
             parser.layers,
             {
                 'Ltest': [
@@ -70,7 +72,7 @@ class TestPoly(unittest.TestCase):
             "P 60 20 40 10 30 30 10 30;\n"
             "E\n"
             )
-        self.assertEqual(
+        self.assertPrettyEqual(
             parser.layers,
             {
                 'Lone': [
@@ -93,6 +95,72 @@ class TestPoly(unittest.TestCase):
                         (40, 10),
                         (30, 30),
                         (10, 30),
+                        ),
+                    ]
+                },
+            )
+
+    def test_box(self):
+        parser = cf.Parser(
+            )
+        parser.parse(
+            "L Ltest;\n"
+            "B 10 20 3 4;\n"
+            "E\n"
+            )
+        self.assertPrettyEqual(
+            parser.layers,
+            {
+                'Ltest': [
+                    (
+                        (-10 // 2 + 3, -20 // 2 + 4),
+                        (+10 // 2 + 3, -20 // 2 + 4),
+                        (+10 // 2 + 3, +20 // 2 + 4),
+                        (-10 // 2 + 3, +20 // 2 + 4),
+                        ),
+                    ]
+                },
+            )
+
+    def test_unrotated_box(self):
+        parser = cf.Parser(
+            )
+        parser.parse(
+            "L Ltest;\n"
+            "B 10 20 3 4 1 0;\n"
+            "E\n"
+            )
+        self.assertPrettyEqual(
+            parser.layers,
+            {
+                'Ltest': [
+                    (
+                        (-10 // 2 + 3, -20 // 2 + 4),
+                        (+10 // 2 + 3, -20 // 2 + 4),
+                        (+10 // 2 + 3, +20 // 2 + 4),
+                        (-10 // 2 + 3, +20 // 2 + 4),
+                        ),
+                    ]
+                },
+            )
+
+    def test_rotated_box(self):
+        parser = cf.Parser(
+            )
+        parser.parse(
+            "L Ltest;\n"
+            "B 10 20 3 4 0 -1;\n"
+            "E\n"
+            )
+        self.assertPrettyEqual(
+            parser.layers,
+            {
+                'Ltest': [
+                    (  # Pay attention to the order here
+                        (-20 // 2 + 3, +10 // 2 + 4),
+                        (-20 // 2 + 3, -10 // 2 + 4),
+                        (+20 // 2 + 3, -10 // 2 + 4),
+                        (+20 // 2 + 3, +10 // 2 + 4),
                         ),
                     ]
                 },
