@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cift"
-version = "0.0.5"
+version = "0.0.6"
 description = """Caltech Intermediate Form parser in pure Python"""
 authors = [
-	{name = "maybetree", email = "no@email.com"}
+	{name = "maybetree", email = "maybetree48@proton.me"}
 	]
 license = { file = "LICENSE.txt" }
 readme = "README.md"
