@@ -13,5 +13,8 @@ dist
 *.bak
 *.old
 *.log
+*.xcf
+*.html
+*.pdf
 venv
 

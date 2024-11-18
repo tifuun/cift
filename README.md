@@ -1,3 +1,5 @@
+![CIFT banner](img/raima-cift-banner.png)
+
 # CIFT
 Caltech Intermediate Form parser in pure Python
 
