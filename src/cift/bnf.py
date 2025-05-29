@@ -2,7 +2,11 @@
 ascii_chars = set(map(chr, range(128)))
 
 class Symbol:
-    pass
+    def __init__(self, name = None):
+        self.name = name
+
+    def __repr__(self):
+        return f"<Symbol {self.name}>"
 
 class _SingleWrapper:
     def __init__(self, what):
@@ -24,112 +28,240 @@ class Maybe(_SingleWrapper):
 class Many(_SingleWrapper):
     pass
 
+class CSTNode:
+    def __init__(self, symbol, children):
+        self.symbol = symbol
+        self.children = children
+        if True in self.children:
+            assert False
+        if False in self.children:
+            assert False
+
+    def __repr__(self):
+        return f"<CSTNode {self.symbol}>"
+
+    def print(self, depth = 0):
+        print(" " * depth, self)
+        for child in self.children:
+            if isinstance(child, type(self)):
+                child.print(depth + 1)
+            else:
+                print(child)
+
+class Foundit:
+    def __bool__(self):
+        return True
+foundit = Foundit()
+
 class Parser:
     def __init__(self, grammar, string):
         self.grammar = grammar
         self.string = string
 
         self.index = 0
+        self.tree = None
 
-    def parse(self, symbol = None, depth = 40):
-        if self.index >= len(self.string):
-            raise ValueError("End!")
+    def parse(self, symbol = None):
 
         if symbol is None:
-            symbol = self.grammar[tuple(self.grammar.keys())[0]]
+            symbol = tuple(self.grammar.keys())[0]
+
+        self.tree = CSTNode(None, [])
+
+        try:
+            result = self._parse(symbol, self.tree)
+        except ValueError:
+            pass
+        
+        print(f"Huh???, {result}")
+
+        return self.tree
+
+    def _parse(self, symbol, node):
+        
+        #if isinstance(symbol, Symbol):
+        #    sdef = self.grammar[symbol]
+        #else:
+        #    sdef = symbol
+        #    symbol = None
 
         if isinstance(symbol, Seq):
             mark = self.index
 
-            results = [self.parse(elem, depth - 1) for elem in symbol.what]
+            results = []
+            children = []
+            for elem in symbol.what:
+                children.append(CSTNode(f"From seq! {elem}", []))
+                results.append(self._parse(elem, children[-1]))
 
             if all(results):
+                node.children.extend(children)
                 return True
 
             self.index = mark
+            print('bt a')
             return False
 
+
         elif isinstance(symbol, Or):
-            mark = self.index
 
-            results = [self.parse(elem, depth - 1) for elem in symbol.what]
+            #results = [self._parse(elem) for elem in symbol.what]
 
-            if any(results):
-                return True
+            #for elem in symbol.what:
+            #    children.append(CSTNode(elem, []))
+            #    results.append(self._parse(elem, children[-1]))
 
-            self.index = mark
-            print("backtrack")
+            #if foundit in results:
+            #    node.children = children
+            #    return foundit
+
+            #if any(results):
+            #    return True
+
+            for elem in symbol.what:
+
+                child = CSTNode("From or!", [])
+                mark = self.index
+
+                result = self._parse(elem, child)
+
+                if result:
+                    node.children.append(child)
+                    return True
+
+                self.index = mark
+            print('bt a')
             return False
 
         elif isinstance(symbol, Maybe):
-            self.parse(symbol.what)
+            #child = CSTNode(symbol.what, [])
+            #result = self._parse(symbol.what, child)
+            #if result is foundit:
+            #    node.children = [child]
+            #    node.symbol = symbol
+            #    return foundit
+            #return True
+
+            child = CSTNode("From maybe!", [])
+
+            if self.is_consumed():
+                return True
+
+            mark = self.index
+
+            result = self._parse(symbol.what, child)
+            if not result:
+                self.index = mark
+            node.children.append(child)
+
             return True
 
         elif isinstance(symbol, Many):
-            while (self.parse(symbol.what)):
-                pass
+
+            if self.is_consumed():
+                return True
+
+            while True:
+                child = CSTNode("from many!", [])
+                mark = self.index
+
+                result = self._parse(symbol.what, child)
+
+                if not result:
+                    self.index = mark
+                    break
+
+                node.children.append(child)
+
+                if self.is_consumed():
+                    return True
+
             return True
 
         elif isinstance(symbol, Symbol):
-            return self.parse(self.grammar[symbol], depth - 1)
+            #child = CSTNode(symbol, [])
+            #result = self._parse(self.grammar[symbol], child)
+            #node.children = [child]
+            #node.symbol = symbol
+            #return result
+            mark = self.index
+
+            child = CSTNode(symbol, [])
+            result = self._parse(self.grammar[symbol], child)
+            node.children.append(child)
+
+            if not result:
+                self.index = mark
+            return result
 
         elif isinstance(symbol, str):
-            if not symbol:
-                #print(" " * depth, "String!", symbol)
-                return True
-            return self.try_consume(symbol)
+            result = self.try_consume(symbol)
+            return result
 
         assert False, type(symbol)
 
     def try_consume(self, symbol):
+        if self.index >= len(self.string):
+            print('foundit')
+            return False
+            return foundit
+
+        if not symbol:
+            return True
+
         if self.string[self.index:].startswith(symbol):
             self.index += len(symbol)
             print("Ate ", symbol)
+
             return True
-        #print("didnt Ate ", symbol)
+
+
         return False
+
+    def is_consumed(self):
+        return self.index >= len(self.string)
 
 def CIF():
     ascii_all = set(map(chr, range(128)))
     ascii_digits = set("0123456789")
     ascii_upper = set("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
-    cif_file = Symbol()
-    command = Symbol()
-    prim_command = Symbol()
-    polygon_command = Symbol()
-    box_command = Symbol()
-    round_flash_command = Symbol()
-    wire_command = Symbol()
-    layer_command = Symbol()
-    def_start_command = Symbol()
-    def_finish_command = Symbol()
-    def_delete_command = Symbol()
-    call_command = Symbol()
-    user_extension_command = Symbol()
-    comment_command = Symbol()
-    end_command = Symbol()
+    cif_file = Symbol("cif_file")
+    command = Symbol("command")
+    prim_command = Symbol("prim_command")
+    polygon_command = Symbol("polygon_command")
+    box_command = Symbol("box_command")
+    round_flash_command = Symbol("round_flash_command")
+    wire_command = Symbol("wire_command")
+    layer_command = Symbol("layer_command")
+    def_start_command = Symbol("def_start_command")
+    def_finish_command = Symbol("def_finish_command")
+    def_delete_command = Symbol("def_delete_command")
+    call_command = Symbol("call_command")
+    user_extension_command = Symbol("user_extension_command")
+    comment_command = Symbol("comment_command")
+    end_command = Symbol("end_command")
 
-    transformation = Symbol()
+    transformation = Symbol("transformation")
 
-    path = Symbol()
-    point = Symbol()
+    path = Symbol("path")
+    point = Symbol("point")
 
-    sinteger = Symbol()
-    integer = Symbol()
-    integer_d = Symbol()
-    shortname = Symbol()
-    c = Symbol()
-    user_text = Symbol()
-    comment_text = Symbol()
+    sinteger = Symbol("sinteger")
+    integer = Symbol("integer")
+    integer_d = Symbol("integer_d")
+    shortname = Symbol("shortname")
+    c = Symbol("c")
+    user_text = Symbol("user_text")
+    comment_text = Symbol("comment_text")
 
-    semi = Symbol()
-    sep = Symbol()
-    digit = Symbol()
-    upper_char = Symbol()
-    blank = Symbol()
-    user_char = Symbol()
-    comment_char = Symbol()
+    semi = Symbol("semi")
+    sep = Symbol("sep")
+    digit = Symbol("digit")
+    upper_char = Symbol("upper_char")
+    blank = Symbol("blank")
+    user_char = Symbol("user_char")
+    comment_char = Symbol("comment_char")
 
     grammar = {
         cif_file: Seq(
@@ -240,7 +372,8 @@ def CIF():
     """
 
     parser = Parser(grammar, mycif)
-    parser.parse()
+    cst = parser.parse()
+    cst.print()
 
 CIF()
 
