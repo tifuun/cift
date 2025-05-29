@@ -2,81 +2,57 @@
 ascii_chars = set(map(chr, range(128)))
 
 class Symbol:
-    def __init__(self, name):
-        self.name = name
-
-    def __repr__(self):
-        return f"Symbol {self.name}"
-
-class Container:
-    def __init__(self, *args):
-        self.data = args
-
-    def __iter__(self):
-        return iter(self.data)
-
-class Seq(Container):
     pass
 
-class Or(Container):
-    pass
-
-#def many(grammar, what):
-#    #return Or("", what, Seq(what, what))
-#    sym = Symbol("foo")
-#    #new = Or(Seq(what, sym), what, "")
-#    new = Or("", what, Seq(what, sym))
-#    grammar[sym] = new
-#    return sym
-
-class many:
-    def __init__(self, _, what):
+class _SingleWrapper:
+    def __init__(self, what):
         self.what = what
 
-def maybe(what):
-    return Or("", what)
+class _TupleWrapper:
+    def __init__(self, *what):
+        self.what = what
+
+class Seq(_TupleWrapper):
+    pass
+
+class Or(_TupleWrapper):
+    pass
+
+class Maybe(_SingleWrapper):
+    pass
+
+class Many(_SingleWrapper):
+    pass
 
 class Parser:
     def __init__(self, grammar, string):
         self.grammar = grammar
         self.string = string
 
-        self.index_mark = 0
         self.index = 0
 
     def parse(self, symbol = None, depth = 40):
-        #print(self.string)
         if self.index >= len(self.string):
             raise ValueError("End!")
 
-        #if depth == 0:
-        #    return False
-
         if symbol is None:
             symbol = self.grammar[tuple(self.grammar.keys())[0]]
-            #print(" " * depth, "Auto", tuple(self.grammar.keys())[0])
 
         if isinstance(symbol, Seq):
-            #print(" " * depth, "Sequence!", symbol)
             mark = self.index
 
-            results = [self.parse(elem, depth - 1) for elem in symbol]
+            results = [self.parse(elem, depth - 1) for elem in symbol.what]
 
             if all(results):
                 return True
 
             self.index = mark
-            print("backtrack")
             return False
 
         elif isinstance(symbol, Or):
-            #print(" " * depth, "Or!", symbol)
             mark = self.index
 
-            #for elem in symbol:
-            #    if self.parse(elem, depth - 1):
-            #        return True
-            results = [self.parse(elem, depth - 1) for elem in symbol]
+            results = [self.parse(elem, depth - 1) for elem in symbol.what]
 
             if any(results):
                 return True
@@ -85,13 +61,16 @@ class Parser:
             print("backtrack")
             return False
 
-        elif isinstance(symbol, many):
+        elif isinstance(symbol, Maybe):
+            self.parse(symbol.what)
+            return True
+
+        elif isinstance(symbol, Many):
             while (self.parse(symbol.what)):
                 pass
             return True
 
         elif isinstance(symbol, Symbol):
-            #print(" " * depth, "Symbol!", symbol)
             return self.parse(self.grammar[symbol], depth - 1)
 
         elif isinstance(symbol, str):
@@ -110,62 +89,55 @@ class Parser:
         #print("didnt Ate ", symbol)
         return False
 
-    def back(self):
-        self.index = self.index_mark
-
-    def mark(self):
-        self.index_mark = self.index
-
 def CIF():
     ascii_all = set(map(chr, range(128)))
     ascii_digits = set("0123456789")
     ascii_upper = set("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
-    cif_file = Symbol("cif_file")
-    command = Symbol("command")
-    prim_command = Symbol("prim_command")
-    polygon_command = Symbol("polygon_command")
-    box_command = Symbol("box_command")
-    round_flash_command = Symbol("round_flash_command")
-    wire_command = Symbol("wire_command")
-    layer_command = Symbol("layer_command")
-    def_start_command = Symbol("def_start_command")
-    def_finish_command = Symbol("def_finish_command")
-    def_delete_command = Symbol("def_delete_command")
-    call_command = Symbol("call_command")
-    user_extension_command = Symbol("user_extension_command")
-    comment_command = Symbol("comment_command")
-    end_command = Symbol("end_command")
+    cif_file = Symbol()
+    command = Symbol()
+    prim_command = Symbol()
+    polygon_command = Symbol()
+    box_command = Symbol()
+    round_flash_command = Symbol()
+    wire_command = Symbol()
+    layer_command = Symbol()
+    def_start_command = Symbol()
+    def_finish_command = Symbol()
+    def_delete_command = Symbol()
+    call_command = Symbol()
+    user_extension_command = Symbol()
+    comment_command = Symbol()
+    end_command = Symbol()
 
-    transformation = Symbol("transformation")
+    transformation = Symbol()
 
-    path = Symbol("path")
-    point = Symbol("point")
+    path = Symbol()
+    point = Symbol()
 
-    sinteger = Symbol("sinteger")
-    integer = Symbol("integer")
-    integer_d = Symbol("integer_d")
-    shortname = Symbol("shortname")
-    c = Symbol("c")
-    user_text = Symbol("user_text")
-    comment_text = Symbol("comment_text")
+    sinteger = Symbol()
+    integer = Symbol()
+    integer_d = Symbol()
+    shortname = Symbol()
+    c = Symbol()
+    user_text = Symbol()
+    comment_text = Symbol()
 
-    semi = Symbol("semi")
-    sep = Symbol("sep")
-    digit = Symbol("digit")
-    upper_char = Symbol("upper_char")
-    blank = Symbol("blank")
-    user_char = Symbol("user_char")
-    comment_char = Symbol("comment_char")
+    semi = Symbol()
+    sep = Symbol()
+    digit = Symbol()
+    upper_char = Symbol()
+    blank = Symbol()
+    user_char = Symbol()
+    comment_char = Symbol()
 
-    extra = {}
     grammar = {
         cif_file: Seq(
-            many(extra, 
-                Seq(many(extra, blank), maybe(command), semi)
+            Many(
+                Seq(Many(blank), Maybe(command), semi)
                 ),
             end_command,
-            many(extra, blank)
+            Many(blank)
             ),
 
         command: Or(
@@ -174,10 +146,10 @@ def CIF():
             Seq(
                 def_start_command,
                 semi,
-                many(extra, 
+                Many(
                     Seq(
-                        many(extra, blank),
-                        maybe(prim_command),
+                        Many(blank),
+                        Maybe(prim_command),
                         semi
                         ),
                     ),
@@ -199,50 +171,50 @@ def CIF():
         polygon_command: Seq('P', path),
         box_command: Seq(
             'B', integer, sep, integer, sep, point,
-            maybe(Seq(sep, point)),
+            Maybe(Seq(sep, point)),
             ),
         round_flash_command: Seq("R", integer, sep, point),
         wire_command: Seq("W", integer, sep, path),
-        layer_command: Seq("L", many(extra, blank), shortname),
+        layer_command: Seq("L", Many(blank), shortname),
         def_start_command: Seq(
-            "D", many(extra, blank), "S", integer,
-            maybe(Seq(sep, integer, sep, integer))
+            "D", Many(blank), "S", integer,
+            Maybe(Seq(sep, integer, sep, integer))
             ),
-        def_finish_command: Seq("S", many(extra, blank), "F"),
-        def_delete_command: Seq("D", many(extra, blank), "D", integer),
+        def_finish_command: Seq("S", Many(blank), "F"),
+        def_delete_command: Seq("D", Many(blank), "D", integer),
         call_command: Seq("C", integer, transformation),
         user_extension_command: Seq(digit, user_text),
         comment_command: Seq("(", comment_text, ")"),
         end_command: "E",
 
-        transformation: many(extra, 
+        transformation: Many(
             Seq(
-                many(extra, blank),
+                Many(blank),
                 Or(
                     Seq("T", point),
-                    Seq("M", many(extra, blank), "X"),
-                    Seq("M", many(extra, blank), "Y"),
+                    Seq("M", Many(blank), "X"),
+                    Seq("M", Many(blank), "Y"),
                     Seq("R", point),
                     )
                 )
             ),
 
-        path: Seq(point, many(extra, Seq(sep, point))),
+        path: Seq(point, Many(Seq(sep, point))),
         point: Seq(sinteger, sep, sinteger),
 
-        sinteger: Seq(many(extra, sep), maybe("-"), integer_d),
-        integer: Seq(many(extra, sep), integer_d),
-        integer_d: Seq(digit, many(extra, digit)),
+        sinteger: Seq(Many(sep), Maybe("-"), integer_d),
+        integer: Seq(Many(sep), integer_d),
+        integer_d: Seq(digit, Many(digit)),
 
-        shortname: Seq(c, maybe(c), maybe(c), maybe(c)),
+        shortname: Seq(c, Maybe(c), Maybe(c), Maybe(c)),
         c: Or(digit, upper_char),
-        user_text: many(extra, user_char),
+        user_text: Many(user_char),
         comment_text: Or(
-            many(extra, comment_char),
+            Many(comment_char),
             Seq(comment_text, "(", comment_text, ")", comment_text)
             ),
 
-        semi: Seq(many(extra, blank), ";", many(extra, blank)),
+        semi: Seq(Many(blank), ";", Many(blank)),
         sep: Or(upper_char, blank),
         digit: Or(*ascii_digits),
         upper_char: Or(*ascii_upper),
@@ -250,9 +222,6 @@ def CIF():
         user_char: Or(*(ascii_all - set(";"))),
         comment_char: Or(*(ascii_all - set("()"))),
         }
-
-    grammar.update(extra)
-
 
 
     #Parser(grammar, "L Lone; P 10 10 10 20 30 30 10 30; E").parse()
