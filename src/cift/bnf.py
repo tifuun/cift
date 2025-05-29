@@ -92,7 +92,8 @@ class Parser:
             children = []
             for elem in symbol.what:
                 children.append(CSTNode(f"From seq! {elem}", []))
-                results.append(self._parse(elem, children[-1]))
+                #results.append(self._parse(elem, children[-1]))
+                results.append(self._parse(elem, node))
 
             if all(results):
                 node.children.extend(children)
@@ -123,10 +124,10 @@ class Parser:
                 child = CSTNode("From or!", [])
                 mark = self.index
 
-                result = self._parse(elem, child)
+                result = self._parse(elem, node)
 
                 if result:
-                    node.children.append(child)
+                    node.children.extend(child.children)
                     return True
 
                 else:
@@ -151,10 +152,10 @@ class Parser:
 
             mark = self.index
 
-            result = self._parse(symbol.what, child)
+            result = self._parse(symbol.what, node)
 
             if result:
-                node.children.append(child)
+                node.children.extend(child.children)
             else:
                 self.index = mark
 
@@ -169,10 +170,10 @@ class Parser:
                 child = CSTNode("from many!", [])
                 mark = self.index
 
-                result = self._parse(symbol.what, child)
+                result = self._parse(symbol.what, node)
 
                 if result:
-                    node.children.append(child)
+                    node.children.extend(child.children)
                 else:
                     self.index = mark
                     break
@@ -202,6 +203,8 @@ class Parser:
 
         elif isinstance(symbol, str):
             result = self.try_consume(symbol)
+            if result:
+                node.children.append(symbol)
             return result
 
         assert False, type(symbol)
