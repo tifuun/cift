@@ -129,7 +129,9 @@ class Parser:
                     node.children.append(child)
                     return True
 
-                self.index = mark
+                else:
+                    self.index = mark
+
             print('bt a')
             return False
 
@@ -150,9 +152,11 @@ class Parser:
             mark = self.index
 
             result = self._parse(symbol.what, child)
-            if not result:
+
+            if result:
+                node.children.append(child)
+            else:
                 self.index = mark
-            node.children.append(child)
 
             return True
 
@@ -167,11 +171,11 @@ class Parser:
 
                 result = self._parse(symbol.what, child)
 
-                if not result:
+                if result:
+                    node.children.append(child)
+                else:
                     self.index = mark
                     break
-
-                node.children.append(child)
 
                 if self.is_consumed():
                     return True
@@ -188,10 +192,12 @@ class Parser:
 
             child = CSTNode(symbol, [])
             result = self._parse(self.grammar[symbol], child)
-            node.children.append(child)
 
-            if not result:
+            if result:
+                node.children.append(child)
+            else:
                 self.index = mark
+
             return result
 
         elif isinstance(symbol, str):
