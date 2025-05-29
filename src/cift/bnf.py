@@ -201,10 +201,12 @@ class Parser:
         assert False, type(symbol)
 
     def try_consume(self, symbol):
-        if self.index >= len(self.string):
-            print('foundit')
-            return False
-            return foundit
+        if self.index > len(self.string):
+            assert False
+
+        if self.index == len(self.string):
+            print(f'foundit, {symbol}, {len(symbol)}')
+            return len(symbol) == 0
 
         if not symbol:
             return True
@@ -370,6 +372,8 @@ def CIF():
     P 10 10 0 10 10 0;
     E
     """
+
+    mycif = """L Lone; E"""
 
     parser = Parser(grammar, mycif)
     cst = parser.parse()
