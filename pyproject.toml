@@ -9,7 +9,7 @@ description = """Caltech Intermediate Form parser in pure Python"""
 authors = [
 	{name = "maybetree", email = "maybetree48@proton.me"}
 	]
-license = { file = "LICENSE.txt" }
+license = "GPL-3.0-only"
 readme = "README.md"
 classifiers = [
 	'Programming Language :: Python :: 3',

@@ -43,9 +43,18 @@ that fall away to reveal the geometries it represents.
 
 ## License
 
-You should have received a copy of the
-CC0 Public Domain Dedication along with this software.
-If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
+cift is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation, version 3 of the License only.
 
-Future versions may switch to a difference license.
+cift is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with
+cift. If not, see <https://www.gnu.org/licenses/>. 
+
+---
+
+Copyright (c) 2025, maybetree.
 
