@@ -84,6 +84,8 @@ class Parser:
         self.index = 0
         self.tree = None
 
+        self.fullcst = False
+
     def parse(self, symbol = None):
 
         if symbol is None:
@@ -106,6 +108,7 @@ class Parser:
 
             if child:
                 node.children.append(child)
+                child.symbol = symbol
                 return node
             self.index = mark
             return False
@@ -119,7 +122,11 @@ class Parser:
                 children.append(self._parse(elem))
 
             if all(children):
-                node.children.extend(children)
+                if self.fullcst:
+                    node.children.extend(child)
+                else:
+                    for child in children:
+                        node.children.extend(child.children)
                 return node
 
             self.index = mark
@@ -135,7 +142,10 @@ class Parser:
                 child = self._parse(elem)
 
                 if child:
-                    node.children.append(child)
+                    if self.fullcst:
+                        node.children.append(child)
+                    else:
+                        node.children.extend(child.children)
                     return node
 
                 else:
@@ -153,7 +163,10 @@ class Parser:
             child = self._parse(symbol.what)
 
             if child:
-                node.children.append(child)
+                if self.fullcst:
+                    node.children.append(child)
+                else:
+                    node.children.extend(child.children)
             else:
                 self.index = mark
 
@@ -170,7 +183,10 @@ class Parser:
                 child = self._parse(symbol.what)
 
                 if child:
-                    node.children.append(child)
+                    if self.fullcst:
+                        node.children.append(child)
+                    else:
+                        node.children.extend(child.children)
                 else:
                     self.index = mark
                     break
