@@ -79,13 +79,20 @@ class Parser:
 
     def _parse(self, symbol, node):
         
-        #if isinstance(symbol, Symbol):
-        #    sdef = self.grammar[symbol]
-        #else:
-        #    sdef = symbol
-        #    symbol = None
+        if isinstance(symbol, Symbol):
+            mark = self.index
 
-        if isinstance(symbol, Seq):
+            child = CSTNode(symbol, [])
+            result = self._parse(self.grammar[symbol], child)
+
+            if result:
+                node.children.append(child)
+            else:
+                self.index = mark
+
+            return result
+
+        elif isinstance(symbol, Seq):
             mark = self.index
 
             results = []
@@ -106,19 +113,6 @@ class Parser:
 
         elif isinstance(symbol, Or):
 
-            #results = [self._parse(elem) for elem in symbol.what]
-
-            #for elem in symbol.what:
-            #    children.append(CSTNode(elem, []))
-            #    results.append(self._parse(elem, children[-1]))
-
-            #if foundit in results:
-            #    node.children = children
-            #    return foundit
-
-            #if any(results):
-            #    return True
-
             for elem in symbol.what:
 
                 child = CSTNode("From or!", [])
@@ -137,13 +131,6 @@ class Parser:
             return False
 
         elif isinstance(symbol, Maybe):
-            #child = CSTNode(symbol.what, [])
-            #result = self._parse(symbol.what, child)
-            #if result is foundit:
-            #    node.children = [child]
-            #    node.symbol = symbol
-            #    return foundit
-            #return True
 
             child = CSTNode("From maybe!", [])
 
@@ -182,24 +169,6 @@ class Parser:
                     return True
 
             return True
-
-        elif isinstance(symbol, Symbol):
-            #child = CSTNode(symbol, [])
-            #result = self._parse(self.grammar[symbol], child)
-            #node.children = [child]
-            #node.symbol = symbol
-            #return result
-            mark = self.index
-
-            child = CSTNode(symbol, [])
-            result = self._parse(self.grammar[symbol], child)
-
-            if result:
-                node.children.append(child)
-            else:
-                self.index = mark
-
-            return result
 
         elif isinstance(symbol, str):
             result = self.try_consume(symbol)
