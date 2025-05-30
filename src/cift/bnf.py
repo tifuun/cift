@@ -63,13 +63,35 @@ class CSTNode:
     def __bool__(self):
         return True
 
-    def print(self, depth = 0):
-        print(" " * depth, self)
+    def descend(
+            self,
+            callback,
+            callback_terminal = None,
+            depth = 0,
+            number = None
+            ):
+
+        if number is None:
+            number = [0]
+
+        if callback_terminal is None:
+            callback_terminal = callback
+            
+        callback(self, depth, number[0])
+        number[0] += 1
         for child in self.children:
             if isinstance(child, type(self)):
-                child.print(depth + 1)
+                child.descend(callback, callback_terminal, depth + 1, number)
+            elif isinstance(child, str):
+                callback_terminal(child, depth + 1, number[0])
             else:
-                print(' ' * depth, child)
+                assert False
+
+    def print(self, depth = 0):
+        self.descend(
+            lambda obj, depth, number:
+            print(f"{number}:{' ' * depth}{repr(obj)}"),
+            )
 
 class Foundit:
     def __bool__(self):
@@ -369,6 +391,14 @@ def CIF():
     #return
 
     mycif = """
+    L L01;
+    DS 1;
+    P 10 10 10 20 30 30 10 30;
+    DF;
+    E
+    """
+
+    mycif = """
     DS 1;
     L L01;
     P 10 10 10 20 30 30 10 30;
@@ -376,14 +406,6 @@ def CIF():
     L L02;
     C 1;
     P 10 10 0 10 10 0;
-    E
-    """
-
-    mycif = """
-    L L01;
-    DS 1;
-    P 10 10 10 20 30 30 10 30;
-    DF;
     E
     """
 
