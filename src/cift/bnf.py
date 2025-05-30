@@ -69,7 +69,7 @@ class CSTNode:
             if isinstance(child, type(self)):
                 child.print(depth + 1)
             else:
-                print(child)
+                print(' ' * depth, child)
 
 class Foundit:
     def __bool__(self):
@@ -370,7 +370,7 @@ def CIF():
 
     mycif = """
     DS 1;
-    L Lone;
+    L L01;
     P 10 10 10 20 30 30 10 30;
     DF;
     L Ltwo;
@@ -379,7 +379,7 @@ def CIF():
     E
     """
 
-    mycif = """L Lone; E"""
+    mycif = """L LO1; E"""
 
     parser = Parser(grammar, mycif)
     cst = parser.parse()
