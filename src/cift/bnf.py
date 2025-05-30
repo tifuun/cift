@@ -320,7 +320,7 @@ def CIF():
             "D", Many(blank), "S", integer,
             Maybe(Seq(sep, integer, sep, integer))
             ),
-        def_finish_command: Seq("S", Many(blank), "F"),
+        def_finish_command: Seq("D", Many(blank), "F"),
         def_delete_command: Seq("D", Many(blank), "D", integer),
         call_command: Seq("C", integer, transformation),
         user_extension_command: Seq(digit, user_text),
@@ -373,13 +373,21 @@ def CIF():
     L L01;
     P 10 10 10 20 30 30 10 30;
     DF;
-    L Ltwo;
+    L L02;
     C 1;
     P 10 10 0 10 10 0;
     E
     """
 
-    mycif = """L LO1; E"""
+    mycif = """
+    L L01;
+    DS 1;
+    P 10 10 10 20 30 30 10 30;
+    DF;
+    E
+    """
+
+    #mycif = """L LO1; E"""
 
     parser = Parser(grammar, mycif)
     cst = parser.parse()
