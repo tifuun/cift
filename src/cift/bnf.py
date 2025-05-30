@@ -1,5 +1,23 @@
+import inspect
 
 ascii_chars = set(map(chr, range(128)))
+
+class NorxondorGorgonax:
+    def __init__(self):
+        self.line = self.get_instantiation_line_text()
+
+    def get_instantiation_line_text(self):
+        # Inspect the call stack to get the line of code of the instantiation
+        stack = inspect.stack()
+        # The line text is in the caller's frame
+        frame = stack[3]
+        line_number = frame.lineno
+        filename = frame.filename
+
+        # Open the file and get the line of code
+        with open(filename, 'r') as f:
+            lines = f.readlines()
+            return lines[line_number - 1].strip()  # Line numbers are 1-based
 
 class Symbol:
     def __init__(self, name = None):
@@ -8,12 +26,14 @@ class Symbol:
     def __repr__(self):
         return f"<Symbol {self.name}>"
 
-class _SingleWrapper:
+class _SingleWrapper(NorxondorGorgonax):
     def __init__(self, what):
+        super().__init__()
         self.what = what
 
-class _TupleWrapper:
+class _TupleWrapper(NorxondorGorgonax):
     def __init__(self, *what):
+        super().__init__()
         self.what = what
 
 class Seq(_TupleWrapper):
@@ -39,6 +59,9 @@ class CSTNode:
 
     def __repr__(self):
         return f"<CSTNode {self.symbol}>"
+
+    def __bool__(self):
+        return True
 
     def print(self, depth = 0):
         print(" " * depth, self)
@@ -66,115 +89,103 @@ class Parser:
         if symbol is None:
             symbol = tuple(self.grammar.keys())[0]
 
-        self.tree = CSTNode(None, [])
-
-        try:
-            result = self._parse(symbol, self.tree)
-        except ValueError:
-            pass
+        self.tree = self._parse(symbol)
         
-        print(f"Huh???, {result}")
-
         return self.tree
 
-    def _parse(self, symbol, node):
+    def _parse(self, symbol):
         
+        node = CSTNode(symbol, [])
+
+        self.check_over_consumed()
+
         if isinstance(symbol, Symbol):
             mark = self.index
 
-            child = CSTNode(symbol, [])
-            result = self._parse(self.grammar[symbol], child)
+            child = self._parse(self.grammar[symbol])
 
-            if result:
+            if child:
                 node.children.append(child)
-            else:
-                self.index = mark
+                return node
+            self.index = mark
+            return False
 
-            return result
 
         elif isinstance(symbol, Seq):
             mark = self.index
 
-            results = []
             children = []
             for elem in symbol.what:
-                children.append(CSTNode(f"From seq! {elem}", []))
-                #results.append(self._parse(elem, children[-1]))
-                results.append(self._parse(elem, node))
+                children.append(self._parse(elem))
 
-            if all(results):
+            if all(children):
                 node.children.extend(children)
-                return True
+                return node
 
             self.index = mark
-            print('bt a')
             return False
 
 
         elif isinstance(symbol, Or):
 
+            mark = self.index
+
             for elem in symbol.what:
 
-                child = CSTNode("From or!", [])
-                mark = self.index
+                child = self._parse(elem)
 
-                result = self._parse(elem, node)
-
-                if result:
-                    node.children.extend(child.children)
-                    return True
+                if child:
+                    node.children.append(child)
+                    return node
 
                 else:
                     self.index = mark
 
-            print('bt a')
             return False
 
         elif isinstance(symbol, Maybe):
 
-            child = CSTNode("From maybe!", [])
-
             if self.is_consumed():
-                return True
+                return node
 
             mark = self.index
 
-            result = self._parse(symbol.what, node)
+            child = self._parse(symbol.what)
 
-            if result:
-                node.children.extend(child.children)
+            if child:
+                node.children.append(child)
             else:
                 self.index = mark
 
-            return True
+            return node
 
         elif isinstance(symbol, Many):
 
             if self.is_consumed():
-                return True
+                return node
 
             while True:
-                child = CSTNode("from many!", [])
                 mark = self.index
 
-                result = self._parse(symbol.what, node)
+                child = self._parse(symbol.what)
 
-                if result:
-                    node.children.extend(child.children)
+                if child:
+                    node.children.append(child)
                 else:
                     self.index = mark
                     break
 
                 if self.is_consumed():
-                    return True
+                    return node
 
-            return True
+            return node
 
         elif isinstance(symbol, str):
             result = self.try_consume(symbol)
             if result:
                 node.children.append(symbol)
-            return result
+                return node
+            return False
 
         assert False, type(symbol)
 
@@ -183,7 +194,6 @@ class Parser:
             assert False
 
         if self.index == len(self.string):
-            print(f'foundit, {symbol}, {len(symbol)}')
             return len(symbol) == 0
 
         if not symbol:
@@ -191,15 +201,17 @@ class Parser:
 
         if self.string[self.index:].startswith(symbol):
             self.index += len(symbol)
-            print("Ate ", symbol)
 
             return True
-
 
         return False
 
     def is_consumed(self):
-        return self.index >= len(self.string)
+        return self.index == len(self.string)
+
+    def check_over_consumed(self):
+        if self.index > len(self.string):
+            assert False
 
 def CIF():
     ascii_all = set(map(chr, range(128)))
@@ -357,7 +369,8 @@ def CIF():
     cst = parser.parse()
     cst.print()
 
-CIF()
+if __name__ == '__main__':
+    CIF()
 
 
 def foo():
