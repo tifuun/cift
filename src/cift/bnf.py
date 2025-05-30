@@ -48,7 +48,7 @@ class Maybe(_SingleWrapper):
 class Many(_SingleWrapper):
     pass
 
-class CSTNode:
+class ASTNode:
     def __init__(self, symbol, children):
         self.symbol = symbol
         self.children = children
@@ -58,7 +58,7 @@ class CSTNode:
             assert False
 
     def __repr__(self):
-        return f"<CSTNode {self.symbol}>"
+        return f"<ASTNode {self.symbol}>"
 
     def __bool__(self):
         return True
@@ -119,7 +119,7 @@ class Parser:
 
     def _parse(self, symbol):
         
-        node = CSTNode(symbol, [])
+        node = ASTNode(symbol, [])
 
         self.check_over_consumed()
 
