@@ -1,4 +1,5 @@
 import inspect
+from weakref import WeakKeyDictionary
 
 ascii_chars = set(map(chr, range(128)))
 
@@ -81,9 +82,16 @@ class ASTNode:
         number[0] += 1
         for child in self.children:
             if isinstance(child, type(self)):
-                child.descend(callback, callback_terminal, depth + 1, number)
+                if callback is not False:
+                    child.descend(
+                        callback,
+                        callback_terminal,
+                        depth + 1,
+                        number
+                        )
             elif isinstance(child, str):
-                callback_terminal(child, depth + 1, number[0])
+                if callback_terminal is not False:
+                    callback_terminal(child, depth + 1, number[0])
             else:
                 assert False
 
@@ -93,10 +101,35 @@ class ASTNode:
             print(f"{number}:{' ' * depth}{repr(obj)}"),
             )
 
-class Foundit:
-    def __bool__(self):
-        return True
-foundit = Foundit()
+    def yield_dot(self, depth = 0):
+        yield 'digraph D {'
+        yield 'node [shape=box]'
+
+        ordering = WeakKeyDictionary()
+        self.descend(
+            lambda obj, depth, number, ordering = ordering:
+            ordering.update({obj: number}),
+            False
+            )
+
+        for node, number in ordering.items():
+            # TODO sanitize
+            yield f'N{number} [label="{node.symbol}"]'
+
+        edges = []
+        self.descend(
+            lambda obj, depth, number, ordering = ordering:
+            edges.extend(
+                f"N{number} -> N{ordering[child]}"
+                for child in obj.children if isinstance(child, type(self))
+                ),
+            False
+            )
+        yield from edges
+        yield '}'
+
+    def print_dot(self):
+        print('\n'.join(self.yield_dot()))
 
 class Parser:
     def __init__(self, grammar, string):
@@ -413,7 +446,7 @@ def CIF():
 
     parser = Parser(grammar, mycif)
     cst = parser.parse()
-    cst.print()
+    cst.print_dot()
 
 if __name__ == '__main__':
     CIF()

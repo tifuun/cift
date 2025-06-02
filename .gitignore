@@ -16,5 +16,7 @@ dist
 *.xcf
 *.html
 *.pdf
+*.png
+*.gv
 venv
 
