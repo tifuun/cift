@@ -5,10 +5,10 @@ def escape_dot_label(s: str) -> str:
     """
     chatgpt code, no clue whether this is exhaustive or not
     """
-    return '"' + s.replace('\\', '\\\\') \
-                  .replace('"', '\\"') \
-                  .replace('\n', '\\l') \
-                  .replace('\r', '') + '"'
+    return s.replace('\\', r'\\') \
+                  .replace('"', r'\"') \
+                  .replace('\n', r'\l') \
+                  .replace('\r', '') + r'\l'
 
 ascii_chars = set(map(chr, range(128)))
 
@@ -125,7 +125,7 @@ class ASTNode:
 
         for node, number in ordering.items():
             #yield f'N{number} [label="{node.symbol.name}"]'
-            yield f'N{number} [label={escape_dot_label(node.string)}]'
+            yield fr'N{number} [label="{node.symbol.name}\l{escape_dot_label(node.string)}"]'
 
         edges = []
         self.descend(
