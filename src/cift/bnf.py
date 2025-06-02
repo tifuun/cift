@@ -418,6 +418,34 @@ def CIF():
         comment_char: Or(*(ascii_all - set("()"))),
         }
 
+    def reduce(node):
+        new_children = []
+        for child in node.children:
+            if isinstance(child, str):
+                continue
+
+            if child.symbol is blank:
+                continue
+
+            if child.symbol is sep:
+                continue
+
+            if child.symbol is semi:
+                continue
+
+            #if child.symbol is command:
+            #    assert len(child.children) == 1
+            #    child = child.children[0]
+
+            if child.symbol is prim_command:
+                assert len(child.children) == 1
+                child = child.children[0]
+
+            
+            new_children.append(child)
+
+        node.children = new_children
+
 
     #Parser(grammar, "L Lone; P 10 10 10 20 30 30 10 30; E").parse()
 
@@ -446,6 +474,7 @@ def CIF():
 
     parser = Parser(grammar, mycif)
     cst = parser.parse()
+    cst.descend(lambda node, depth, number: reduce(node), False)
     cst.print_dot()
 
 if __name__ == '__main__':
