@@ -1,6 +1,15 @@
 import inspect
 from weakref import WeakKeyDictionary
 
+def escape_dot_label(s: str) -> str:
+    """
+    chatgpt code, no clue whether this is exhaustive or not
+    """
+    return '"' + s.replace('\\', '\\\\') \
+                  .replace('"', '\\"') \
+                  .replace('\n', '\\l') \
+                  .replace('\r', '') + '"'
+
 ascii_chars = set(map(chr, range(128)))
 
 class NorxondorGorgonax:
@@ -53,6 +62,8 @@ class ASTNode:
     def __init__(self, symbol, children):
         self.symbol = symbol
         self.children = children
+        self.string = None
+
         if True in self.children:
             assert False
         if False in self.children:
@@ -113,8 +124,8 @@ class ASTNode:
             )
 
         for node, number in ordering.items():
-            # TODO sanitize
-            yield f'N{number} [label="{node.symbol}"]'
+            #yield f'N{number} [label="{node.symbol.name}"]'
+            yield f'N{number} [label={escape_dot_label(node.string)}]'
 
         edges = []
         self.descend(
@@ -130,6 +141,13 @@ class ASTNode:
 
     def print_dot(self):
         print('\n'.join(self.yield_dot()))
+
+    def compute_string(self):
+        self.string = ''.join(
+            child if isinstance(child, str) else child.compute_string()
+            for child in self.children
+            )
+        return self.string
 
 class Parser:
     def __init__(self, grammar, string):
@@ -474,6 +492,7 @@ def CIF():
 
     parser = Parser(grammar, mycif)
     cst = parser.parse()
+    cst.compute_string()
     cst.descend(lambda node, depth, number: reduce(node), False)
     cst.print_dot()
 
