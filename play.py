@@ -12,5 +12,6 @@ E
 parser = cf.Parser(cf.grammars.strict.grammar, mycif)
 cst = parser.parse()
 cst.compute_string()
+cf.astextra.reduce(cst)
 cf.astextra.print_dot(cst)
 

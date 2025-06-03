@@ -2,7 +2,8 @@
 
 from weakref import WeakKeyDictionary
 
-from cift.parser import Symbol
+from cift.parser import CSTNode, Symbol
+from cift.grammars import strict as gr
 
 def escape_dot_label(s: str) -> str:
     """
@@ -23,27 +24,29 @@ def reduce(node):
     """
     new_children = []
     for child in node.children:
-        if isinstance(child, str):
+        reduce(child)
+
+        if child.symbol == gr.semi:
             continue
 
-        if child.symbol is blank:
+        elif child.symbol == gr.blank:
             continue
 
-        if child.symbol is sep:
+        elif child.symbol == gr.sep:
             continue
 
-        if child.symbol is semi:
-            continue
-
-        #if child.symbol is command:
-        #    assert len(child.children) == 1
-        #    child = child.children[0]
-
-        if child.symbol is prim_command:
-            assert len(child.children) == 1
+        elif child.symbol == gr.prim_command:
             child = child.children[0]
 
-        
+        elif child.symbol == gr.digit:
+            child = child.children[0]
+
+        elif child.symbol == gr.c:
+            child = child.children[0]
+
+        elif child.symbol == gr.upper_char:
+            child = child.children[0]
+
         new_children.append(child)
 
     node.children = new_children
@@ -82,4 +85,21 @@ def yield_dot(ast, depth = 0):
 
 def print_dot(ast):
     print('\n'.join(yield_dot(ast)))
+
+#
+#@dataclass
+#class ASTNode:
+#    pass
+#
+#@dataclass
+#class LayerCommand(ASTNode):
+#    name: str
+#
+#@dataclass
+#class PolygonCommand(ASTNode):
+#    points: cf.types.polys
+#
+#@dataclass
+#class SymbolDef(ASTNode):
+#    polys: polys
 
