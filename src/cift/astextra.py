@@ -1,6 +1,21 @@
 """astextra: extra utilities for processing `ASTNode`s."""
 
-from cift.parser import ASTNode
+from weakref import WeakKeyDictionary
+
+from cift.parser import Symbol
+
+def escape_dot_label(s: str) -> str:
+    """
+    chatgpt code, no clue whether this is exhaustive or not
+    """
+    return (
+        s
+        .replace('\\', r'\\')
+        .replace('"', r'\"')
+        .replace('\n', r'\l')
+        .replace('\r', '')
+        + r'\l'
+        )
 
 def reduce(node):
     """
@@ -34,39 +49,37 @@ def reduce(node):
     node.children = new_children
 
 
-def print(self, depth = 0):
-    self.descend(
-        lambda obj, depth, number:
-        print(f"{number}:{' ' * depth}{repr(obj)}"),
-        )
+#def print(self, depth = 0):
+#    self.descend(
+#        lambda obj, depth, number:
+#        print(f"{number}:{' ' * depth}{repr(obj)}"),
+#        )
 
-def yield_dot(self, depth = 0):
+def yield_dot(ast, depth = 0):
     yield 'digraph D {'
     yield 'node [shape=box]'
 
     ordering = WeakKeyDictionary()
-    self.descend(
+    ast.descend(
         lambda obj, depth, number, ordering = ordering:
         ordering.update({obj: number}),
-        False
         )
 
     for node, number in ordering.items():
         #yield f'N{number} [label="{node.symbol.name}"]'
-        yield fr'N{number} [label="{node.symbol.name}\l{escape_dot_label(node.string)}"]'
+        yield fr'N{number} [label="{getattr(node.symbol, "name", "")}\l{escape_dot_label(repr(node.string))}"]'
 
     edges = []
-    self.descend(
+    ast.descend(
         lambda obj, depth, number, ordering = ordering:
         edges.extend(
             f"N{number} -> N{ordering[child]}"
-            for child in obj.children if isinstance(child, type(self))
+            for child in obj.children if isinstance(child, type(ast))
             ),
-        False
         )
     yield from edges
     yield '}'
 
-def print_dot(self):
-    print('\n'.join(self.yield_dot()))
+def print_dot(ast):
+    print('\n'.join(yield_dot(ast)))
 
