@@ -76,9 +76,7 @@ class CSTNode:
                 )
 
     def compute_string(self):
-        if isinstance(self.symbol, str):
-            self.string = self.symbol
-        else:
+        if self.string is None:
             self.string = ''.join(
                 child.compute_string() for child in self.children
                 )
@@ -93,7 +91,7 @@ class Parser:
         self.index = 0
         self.tree = None
 
-        #self.fullcst = False
+        self.fullcst = False
 
     def parse(self, symbol = None):
 
@@ -119,9 +117,11 @@ class Parser:
             child = self._parse(self.grammar[symbol])
 
             if child:
-                #node.children.append(child)
-                node.children.extend(child.children)
-                #child.symbol = symbol
+                if self.fullcst:
+                    node.children.extend(child.children)
+                else:
+                    node.children.append(child)
+                    child.symbol = symbol
                 return node
 
             self.index = mark
@@ -136,12 +136,11 @@ class Parser:
                 children.append(self._parse(elem))
 
             if all(children):
-                node.children.extend(children)
-                #if self.fullcst:
-                #    node.children.extend(child)
-                #else:
-                #    for child in children:
-                #        node.children.extend(child.children)
+                if self.fullcst:
+                    node.children.extend(children)
+                else:
+                    for child in children:
+                        node.children.extend(child.children)
 
                 return node
 
@@ -158,11 +157,10 @@ class Parser:
                 child = self._parse(elem)
 
                 if child:
-                    node.children.append(child)
-                    #if self.fullcst:
-                    #    node.children.append(child)
-                    #else:
-                    #    node.children.extend(child.children)
+                    if self.fullcst:
+                        node.children.append(child)
+                    else:
+                        node.children.extend(child.children)
 
                     return node
 
@@ -181,11 +179,10 @@ class Parser:
             child = self._parse(symbol.what)
 
             if child:
-                node.children.append(child)
-                #if self.fullcst:
-                #    node.children.append(child)
-                #else:
-                #    node.children.extend(child.children)
+                if self.fullcst:
+                    node.children.append(child)
+                else:
+                    node.children.extend(child.children)
             else:
                 self.index = mark
 
@@ -202,11 +199,10 @@ class Parser:
                 child = self._parse(symbol.what)
 
                 if child:
-                    node.children.append(child)
-                    #if self.fullcst:
-                    #    node.children.append(child)
-                    #else:
-                    #    node.children.extend(child.children)
+                    if self.fullcst:
+                        node.children.append(child)
+                    else:
+                        node.children.extend(child.children)
                 else:
                     self.index = mark
                     break
@@ -221,8 +217,8 @@ class Parser:
             if result:
                 child = CSTNode(terminal)
                 child.string = symbol
-                #node.children.append(child)
-                node.children.extend(child.children)
+                node.children.append(child)
+                #node.children.extend(child.children)
                 return node
 
             return False
