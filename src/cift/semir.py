@@ -8,7 +8,46 @@ This file is not yet complete. Only some CIF commands are handled.
 from dataclasses import dataclass
 
 from cift.grammars import strict as gr
-from cift.parser import CSTError
+
+class CSTMonad:
+    def __init__(self, *nodes):
+        self.nodes = nodes
+
+    def __repr__(self):
+        return '\n\t'.join((
+            '<CSTMonad ',
+            *map(repr, self.nodes),
+            '>'
+            ))
+
+    def unroll(self):
+        return type(self)(*(
+            child
+            for node in self.nodes
+            for child in node.children
+            ))
+
+    def oftype(self, symbol):
+        return type(self)(*(
+            node
+            for node in self.nodes
+            if node.symbol is symbol
+            ))
+
+    def assert_len(self, n):
+        if len(self.nodes) == n:
+            return self
+        else:
+            return type(self)()
+
+    def slice(self, a=None, b=None, c=None):
+        return type(self)(*self.nodes[slice(a,b,c)])
+
+    def sole_child(self, symbol):
+        return self.unroll().assert_len(1).oftype(symbol)
+
+    def single_child(self, symbol):
+        return self.unroll().oftype(symbol).assert_len(1)
 
 @dataclass
 class RoutDef:
@@ -16,10 +55,10 @@ class RoutDef:
     num: int
     commands: list  # TODO type
 
-    def __init__(self, tree):
+    def __init__(self, cstmonad):
         self.commands = []
 
-        tree.self_is(gr.command)
+        #tree.self_is(gr.command)
 
         tree.nth(0, gr.def_start_command)
 
@@ -27,6 +66,7 @@ class RoutDef:
             tree
             .nth(0, gr.def_start_command)
             .only(gr.integer)
+            .only(gr.integer_d)
             .string
             )
 
@@ -54,13 +94,13 @@ class RoutCall:
     # TODO rotation/position
     num: int
 
-    def __init__(self, tree):
-        tree.self_is(gr.command)
-
+    def __init__(self, node):
         self.num = int(
-            tree
-            .single(gr.call_command)
-            .only(gr.integer)
+            node
+            .oftype(gr.call_command)
+            .single_child(gr.integer)
+            .single_child(gr.integer_d)
+            .nodes[0]
             .string
             )
 
@@ -71,6 +111,20 @@ class RoutCall:
 class Poly:
     # TODO `types` module???
     points: list[tuple[int, int]]
+
+    def __init__(self, tree):
+        self.points = []
+
+        tree.self_is(gr.command)
+
+        self.name = (
+            tree
+            .single(gr.polygon_command)
+            .only(gr.path)
+            .forevery(gr.point)
+            .only(gr.shortname)
+            .string
+            )
 
     def __repr__(self):
         return f"<Poly>"
