@@ -49,6 +49,13 @@ class CSTMonad:
     def single_child(self, symbol):
         return self.unroll().oftype(symbol).assert_len(1)
 
+    def singledispatch(self, *methods):
+        return type(self)(*(
+            method(type(self)(node))
+            for node in self.nodes
+            )).unroll().assert_length(1)
+
+
 @dataclass
 class RoutDef:
     # TODO the scale thing?
@@ -150,30 +157,28 @@ class LayerSwitch:
 class CIFFile:
     commands: list[LayerSwitch, RoutDef, RoutCall, Poly]
 
-    def __init__(self, tree):
-        tree.self_is(gr.cif_file)
-
+    def __init__(self, node):
         self.commands = []
 
-        for child in tree.children:
-            try:
-                self.commands.append(LayerSwitch(child))
-            except CSTError:
-                pass
+        commands = (
+            node
+            .oftype(gr.cif_file)
+            .unroll()
+            .oftype(gr.command)
+            .nodes
+            )
+        print('\n'.join(map(str, commands)))
 
-            try:
-                self.commands.append(RoutDef(child))
-            except CSTError:
-                pass
+        (
+            node
+            .oftype(gr.cif_file)
+            .unroll()
+            .oftype(gr.command)
+            .singledispatch(RoutDef, RoutCall, Poly, LayerSwitch)
+            # TODO here we need a second monad type for IR?
+            )
 
-            try:
-                self.commands.append(RoutCall(child))
-            except CSTError:
-                pass
-            try:
-                self.commands.append(Poly(child))
-            except CSTError:
-                pass
+    # TODO dispatch method
 
     def print(self):
         print('CIFFile')
