@@ -14,4 +14,5 @@ from cift.parser import CSTNode
 from cift.parser import Parser
 import cift.grammars
 import cift.astextra
+import cift.semir
 

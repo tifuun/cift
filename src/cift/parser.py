@@ -1,5 +1,8 @@
 """parser.py: contains Parser class and relevant utils"""
 
+class CSTError(Exception):
+    pass
+
 class Symbol:
     """A symbol in a context-free grammar"""
     def __init__(self, name = None):
@@ -82,6 +85,50 @@ class CSTNode:
                 )
         return self.string
 
+    def nth(self, n, symbol):
+        """
+        Get the nth child while asserting its type.
+        """
+
+        if len(self.children) <= n:
+            raise CSTError()
+
+        if not self.children[n].symbol is symbol:
+            raise CSTError()
+
+        return self.children[n]
+
+    def only(self, symbol):
+        """
+        Get the only child of this type.
+        If no or multiple are present, throw error.
+        """
+
+        try:
+            [chosen] = filter(
+                lambda child: child.symbol is symbol,
+                self.children
+                )
+        except ValueError as err:
+            raise CSTError() from err
+
+        return chosen
+
+    def single(self, symbol):
+        """
+        Get the single child of this type.
+        If more or no children or child of different type, throw error.
+        """
+
+        if len(self.children) == 1 and self.children[0].symbol is symbol:
+            return self.children[0]
+
+        raise CSTError()
+
+    def self_is(self, symbol):
+        if self.symbol is not symbol:
+            raise CSTError()
+
 class Parser:
     """Parses string according to a context-free grammar definition"""
     def __init__(self, grammar, string):
@@ -96,9 +143,14 @@ class Parser:
     def parse(self, symbol = None):
 
         if symbol is None:
-            symbol = self.grammar[tuple(self.grammar.keys())[0]]
+            sdef = tuple(self.grammar.keys())[0]
+            if self.fullcst:
+                symbol = sdef
+            else:
+                symbol = self.grammar[sdef]
 
         self.tree = self._parse(symbol)
+        self.tree.symbol = sdef
 
         if self.tree is False:
             raise Exception("didnt parse")
