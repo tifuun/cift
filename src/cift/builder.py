@@ -1,10 +1,35 @@
+
+
+class Frame:
+    pass
+
 class Builder:
     def __init__(self):
         self.symbols
         self.layer = None
 
-    def build(SemIR):
-        pass
+    def build(self, toplevel):
+        toplevel.classify()
+
+        assert toplevel.semtype is SemType.FILE
+
+        for child in toplevel.toplevel_children:
+            child.classify()
+
+            self._handle_semir(child)
+
+    def _handle_semir(self, semir):
+        if semir.semtype is SemType.DEF:
+            pass
+        elif semir.semtype is SemType.CALL:
+            pass
+        elif semir.semtype is SemType.LAYER:
+            self.layer = 
+            pass
+        elif semir.semtype is SemType.POLY:
+            pass
+        else:
+            assert False
 
 
 

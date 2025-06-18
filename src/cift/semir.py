@@ -219,6 +219,17 @@ class SemIR:
 
         assert self.semtype is not None
 
+    def build(self):
+        layers = {}
+
+        layer = None
+        for child in self.toplevel_commands:
+            if child.target_layer is not None:
+                layer = child.target_layer
+
+            if child.points is not None:
+                assert layer is not None
+
     def print(self):
         print('SemIR')
         for child in self.commands:
