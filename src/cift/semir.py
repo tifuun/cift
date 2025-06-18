@@ -89,7 +89,7 @@ class CSTMonad:
             )).unroll().assert_length(1)
 
 @dataclass
-class CIFCommand:
+class SemIR:
 
     def __init__(self, node):
         self.toplevel_commands = (
@@ -99,7 +99,6 @@ class CIFCommand:
             .oftype(gr.command)
             .nodes
             )
-        #print('\n'.join(map(str, self.inner_commands)))
 
         self.target_layer = (
             node
@@ -109,7 +108,7 @@ class CIFCommand:
             .mapsingle(lambda node: node.string)
             )
 
-        self.called_rout = (
+        self.called_symb = (
             node
             .sole_child(gr.prim_command)
             .sole_child(gr.call_command)
@@ -118,7 +117,7 @@ class CIFCommand:
             .mapsingle(lambda node: int(node.string))
             )  # TODO transformation
 
-        self.defined_rout = (
+        self.defined_symb = (
             node
             .single_child(gr.def_start_command)
             .single_child(gr.integer)
@@ -126,7 +125,7 @@ class CIFCommand:
             .mapsingle(lambda node: int(node.string))
             )
 
-        self.rout_commands = (
+        self.symb_commands = (
             node
             .single_child(gr.def_start_command)
             .and_(
@@ -162,17 +161,19 @@ class CIFCommand:
     def eval(self, depth=0):
         print(f"{'*'*depth}{self.toplevel_commands = }")
         print(f"{'*'*depth}{self.target_layer = }")
-        print(f"{'*'*depth}{self.called_rout = }")
-        print(f"{'*'*depth}{self.defined_rout = }")
+        print(f"{'*'*depth}{self.called_symb = }")
+        print(f"{'*'*depth}{self.defined_symb = }")
         print(f"{'*'*depth}{self.points = }")
-        print(f"{'*'*depth}{self.rout_commands = }")
+        print(f"{'*'*depth}{self.symb_commands = }")
         print()
         for node in self.toplevel_commands:
             monad = CSTMonad(node)
-            child = CIFCommand(monad)
+            child = type(self)(monad)
             child.eval(depth=depth+1)
 
-        for node in self.rout_commands:
+            self.children.append(child)
+
+        for node in self.symb_commands:
             # init expects command -> prim_command
             # but we have just prim_command
             # so wrap it
@@ -180,13 +181,19 @@ class CIFCommand:
             node_wrapped.children.append(node)
 
             monad = CSTMonad(node_wrapped)
-            child = CIFCommand(monad)
+            child = type(self)(monad)
             child.eval(depth=depth+1)
 
+            self.children.append(child)
+
+    def build(self):
+        layers = {}
+
+        for 
 
 
     def print(self):
-        print('CIFFile')
+        print('SemIR')
         for child in self.commands:
             print(child)
 

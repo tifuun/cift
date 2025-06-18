@@ -20,7 +20,7 @@ Path('cst.gv').write_text(cf.astextra.get_dot(cst))
 system("sh -c 'dot -T png < cst.gv > cst.png'")
 cf.astextra.print_dot(cst)
 monad = cf.semir.CSTMonad(cst)
-semir = cf.semir.CIFCommand(monad)
+semir = cf.semir.SemIR(monad)
 semir.eval()
 ##semir.print()
 

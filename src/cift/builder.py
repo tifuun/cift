@@ -1,6 +1,15 @@
 class Builder:
+    def __init__(self):
+        self.symbols
+
+
+
+
+
+class Builder:
 
     layers: cf.types.layers
+
     #routs_lines: dict[int, list[str]]
     #edges: cf.types.edges
     #routs_start_lines: dict[int, int]
@@ -23,9 +32,6 @@ class Builder:
     #@property
     #def _frame(self) -> Frame:
     #    return self._stack[-1]
-
-    def build_from_reduced_cst(self, cst):
-        pass
 
     def _traceback(self) -> str:
         return '\ncalled by\n'.join((
