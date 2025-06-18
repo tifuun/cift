@@ -1,8 +1,10 @@
 class Builder:
     def __init__(self):
         self.symbols
+        self.layer = None
 
-
+    def build(SemIR):
+        pass
 
 
 

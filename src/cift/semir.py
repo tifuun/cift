@@ -6,6 +6,7 @@ This file is not yet complete. Only some CIF commands are handled.
 """
 
 from dataclasses import dataclass
+from enum import Enum
 
 from cift.grammars import strict as gr
 from cift.parser import terminal
@@ -88,10 +89,19 @@ class CSTMonad:
             for node in self.nodes
             )).unroll().assert_length(1)
 
+class SemType(StringEnum):
+    FILE = 'FILE'
+    DEF = 'DEF'
+    CALL = 'CALL'
+    LAYER = 'LAYER'
+    POLY = 'POLY'
+
 @dataclass
 class SemIR:
 
     def __init__(self, node):
+        self.semtype = None
+
         self.toplevel_commands = (
             node
             .oftype(gr.cif_file)
@@ -171,7 +181,7 @@ class SemIR:
             child = type(self)(monad)
             child.eval(depth=depth+1)
 
-            self.children.append(child)
+            self.toplevel_children.append(child)
 
         for node in self.symb_commands:
             # init expects command -> prim_command
@@ -184,13 +194,30 @@ class SemIR:
             child = type(self)(monad)
             child.eval(depth=depth+1)
 
-            self.children.append(child)
+            self.symb_children.append(child)
 
-    def build(self):
-        layers = {}
+    def classify(self):
+        if self.toplevel_commands is not None:
+            assert self.semtype is None
+            self.semtype = SemType.FILE
 
-        for 
+        if self.target_layer is not None:
+            assert self.semtype is None
+            self.semtype = SemType.LAYER
 
+        if self.called_symb is not None:
+            assert self.semtype is None
+            self.semtype = SemType.CALL
+
+        if self.defined_symb is not None:
+            assert self.semtype is None
+            self.semtype = SemType.DEF
+
+        if self.points is not None:
+            assert self.semtype is None
+            self.semtype = SemType.POLY
+
+        assert self.semtype is not None
 
     def print(self):
         print('SemIR')
