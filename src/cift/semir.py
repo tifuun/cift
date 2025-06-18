@@ -9,6 +9,7 @@ from dataclasses import dataclass
 
 from cift.grammars import strict as gr
 from cift.parser import terminal
+from cift.parser import CSTNode
 
 class CSTMonad:
     def __init__(self, *nodes):
@@ -91,7 +92,7 @@ class CSTMonad:
 class CIFCommand:
 
     def __init__(self, node):
-        self.inner_commands = (
+        self.toplevel_commands = (
             node
             .oftype(gr.cif_file)
             .unroll()
@@ -125,6 +126,17 @@ class CIFCommand:
             .mapsingle(lambda node: int(node.string))
             )
 
+        self.rout_commands = (
+            node
+            .single_child(gr.def_start_command)
+            .and_(
+                node
+                .unroll()
+                .oftype(gr.prim_command)
+                )
+            .nodes
+            )
+
         self.points = (
             node
             .sole_child(gr.prim_command)
@@ -147,16 +159,29 @@ class CIFCommand:
             )
 
 
-    def eval(self):
-        print(f"{self.target_layer = }")
-        print(f"{self.called_rout = }")
-        print(f"{self.defined_rout = }")
-        print(f"{self.points = }")
+    def eval(self, depth=0):
+        print(f"{'*'*depth}{self.toplevel_commands = }")
+        print(f"{'*'*depth}{self.target_layer = }")
+        print(f"{'*'*depth}{self.called_rout = }")
+        print(f"{'*'*depth}{self.defined_rout = }")
+        print(f"{'*'*depth}{self.points = }")
+        print(f"{'*'*depth}{self.rout_commands = }")
         print()
-        for node in self.inner_commands:
+        for node in self.toplevel_commands:
             monad = CSTMonad(node)
             child = CIFCommand(monad)
-            child.eval()
+            child.eval(depth=depth+1)
+
+        for node in self.rout_commands:
+            # init expects command -> prim_command
+            # but we have just prim_command
+            # so wrap it
+            node_wrapped = CSTNode(gr.command)
+            node_wrapped.children.append(node)
+
+            monad = CSTMonad(node_wrapped)
+            child = CIFCommand(monad)
+            child.eval(depth=depth+1)
 
 
 
