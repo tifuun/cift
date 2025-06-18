@@ -86,6 +86,9 @@ def yield_dot(ast, depth = 0):
 def print_dot(ast):
     print('\n'.join(yield_dot(ast)))
 
+def get_dot(ast):
+    return ('\n'.join(yield_dot(ast)))
+
 #
 #@dataclass
 #class ASTNode:

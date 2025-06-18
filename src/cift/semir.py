@@ -8,6 +8,7 @@ This file is not yet complete. Only some CIF commands are handled.
 from dataclasses import dataclass
 
 from cift.grammars import strict as gr
+from cift.parser import terminal
 
 class CSTMonad:
     def __init__(self, *nodes):
@@ -19,6 +20,37 @@ class CSTMonad:
             *map(repr, self.nodes),
             '>'
             ))
+
+    def __bool__(self):
+        return len(self.nodes) > 0
+
+    def and_(self, other):
+        if not bool(self):
+            return self
+        return other
+
+    def or_(self, other):
+        if bool(self):
+            return self
+        return other
+
+    def map(self, func):
+        return tuple(map(func, self.nodes))
+
+    def mapn(self, num, func, fallback=None):
+        if len(self.nodes) != num:
+            return fallback
+        return tuple(map(func, self.nodes))
+
+    def mapn_wrap(self, num, func, fallback=None):
+        if len(self.nodes) != num:
+            return fallback
+        return tuple(func(type(self)(node)) for node in self.nodes)
+
+    def mapsingle(self, func, fallback=None):
+        if len(self.nodes) != 1:
+            return fallback
+        return func(self.nodes[0])
 
     def unroll(self):
         return type(self)(*(
@@ -55,130 +87,78 @@ class CSTMonad:
             for node in self.nodes
             )).unroll().assert_length(1)
 
-
 @dataclass
-class RoutDef:
-    # TODO the scale thing?
-    num: int
-    commands: list  # TODO type
-
-    def __init__(self, cstmonad):
-        self.commands = []
-
-        #tree.self_is(gr.command)
-
-        tree.nth(0, gr.def_start_command)
-
-        self.num = int(
-            tree
-            .nth(0, gr.def_start_command)
-            .only(gr.integer)
-            .only(gr.integer_d)
-            .string
-            )
-
-        for child in tree.children[1:-1]:
-            try:
-                self.commands.append(LayerSwitch(child))
-            except CSTError:
-                pass
-
-            try:
-                self.commands.append(RoutCall(child))
-            except CSTError:
-                pass
-            try:
-                self.commands.append(Poly(child))
-            except CSTError:
-                pass
-
-    def __repr__(self):
-        return f"<RoutDef {self.num}>"
-
-
-@dataclass
-class RoutCall:
-    # TODO rotation/position
-    num: int
+class CIFCommand:
 
     def __init__(self, node):
-        self.num = int(
-            node
-            .oftype(gr.call_command)
-            .single_child(gr.integer)
-            .single_child(gr.integer_d)
-            .nodes[0]
-            .string
-            )
-
-    def __repr__(self):
-        return f"<RoutCall {self.num}>"
-
-@dataclass
-class Poly:
-    # TODO `types` module???
-    points: list[tuple[int, int]]
-
-    def __init__(self, tree):
-        self.points = []
-
-        tree.self_is(gr.command)
-
-        self.name = (
-            tree
-            .single(gr.polygon_command)
-            .only(gr.path)
-            .forevery(gr.point)
-            .only(gr.shortname)
-            .string
-            )
-
-    def __repr__(self):
-        return f"<Poly>"
-
-@dataclass
-class LayerSwitch:
-    name: str
-
-    def __init__(self, tree):
-        tree.self_is(gr.command)
-
-        self.name = (
-            tree
-            .single(gr.layer_command)
-            .only(gr.shortname)
-            .string
-            )
-
-    def __repr__(self):
-        return f"<LayerSwitch '{self.name}'>"
-
-@dataclass
-class CIFFile:
-    commands: list[LayerSwitch, RoutDef, RoutCall, Poly]
-
-    def __init__(self, node):
-        self.commands = []
-
-        commands = (
+        self.inner_commands = (
             node
             .oftype(gr.cif_file)
             .unroll()
             .oftype(gr.command)
             .nodes
             )
-        print('\n'.join(map(str, commands)))
+        #print('\n'.join(map(str, self.inner_commands)))
 
-        (
+        self.target_layer = (
             node
-            .oftype(gr.cif_file)
-            .unroll()
-            .oftype(gr.command)
-            .singledispatch(RoutDef, RoutCall, Poly, LayerSwitch)
-            # TODO here we need a second monad type for IR?
+            .sole_child(gr.prim_command)
+            .sole_child(gr.layer_command)
+            .single_child(gr.shortname)
+            .mapsingle(lambda node: node.string)
             )
 
-    # TODO dispatch method
+        self.called_rout = (
+            node
+            .sole_child(gr.prim_command)
+            .sole_child(gr.call_command)
+            .single_child(gr.integer)
+            .single_child(gr.integer_d)
+            .mapsingle(lambda node: int(node.string))
+            )  # TODO transformation
+
+        self.defined_rout = (
+            node
+            .single_child(gr.def_start_command)
+            .single_child(gr.integer)
+            .single_child(gr.integer_d)
+            .mapsingle(lambda node: int(node.string))
+            )
+
+        self.points = (
+            node
+            .sole_child(gr.prim_command)
+            .sole_child(gr.polygon_command)
+            .single_child(gr.path)
+            .unroll()
+            .oftype(gr.point)
+            .map(lambda point: (
+                CSTMonad(point)
+                .unroll()
+                .oftype(gr.sinteger)
+                .mapn_wrap(2, lambda sint:
+                    [1, -1][bool(sint.single_child(terminal))]  # minus sign
+                    *
+                    sint.single_child(gr.integer_d).mapsingle(
+                        lambda node: int(node.string)
+                        )
+                    )
+                ))
+            )
+
+
+    def eval(self):
+        print(f"{self.target_layer = }")
+        print(f"{self.called_rout = }")
+        print(f"{self.defined_rout = }")
+        print(f"{self.points = }")
+        print()
+        for node in self.inner_commands:
+            monad = CSTMonad(node)
+            child = CIFCommand(monad)
+            child.eval()
+
+
 
     def print(self):
         print('CIFFile')

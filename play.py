@@ -1,11 +1,14 @@
 import cift as cf
+from pathlib import Path
+from os import system
 
 mycif="""
 L L000;
 DS 1;
-P 10 10 20 30 40 50;
+P 10 10 20 -30 -40 50;
 DF;
 C 1;
+P -10 10 20 -30 -40 50;
 E
 """
 
@@ -13,9 +16,12 @@ parser = cf.Parser(cf.grammars.strict.grammar, mycif)
 cst = parser.parse()
 cst.compute_string()
 #cf.astextra.reduce(cst)
+Path('cst.gv').write_text(cf.astextra.get_dot(cst))
+system("sh -c 'dot -T png < cst.gv > cst.png'")
 cf.astextra.print_dot(cst)
 monad = cf.semir.CSTMonad(cst)
-semir = cf.semir.CIFFile(monad)
+semir = cf.semir.CIFCommand(monad)
+semir.eval()
 ##semir.print()
 
 #mycif="""C 1;"""
