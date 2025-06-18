@@ -6,11 +6,17 @@ This file is not yet complete. Only some CIF commands are handled.
 """
 
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 
 from cift.grammars import strict as gr
 from cift.parser import terminal
 from cift.parser import CSTNode
+
+def merge_layers(dest, source):
+    for k, v in source.items():
+        if k not in dest.keys():
+            dest[k] = []
+        dest[k].extend(v)
 
 class CSTMonad:
     def __init__(self, *nodes):
@@ -89,7 +95,7 @@ class CSTMonad:
             for node in self.nodes
             )).unroll().assert_length(1)
 
-class SemType(StringEnum):
+class SemType(StrEnum):
     FILE = 'FILE'
     DEF = 'DEF'
     CALL = 'CALL'
@@ -99,11 +105,14 @@ class SemType(StringEnum):
 @dataclass
 class SemIR:
 
-    def __init__(self, node):
+    def __init__(self, monad):
+        self.toplevel_children = []
+        self.symb_children = []
         self.semtype = None
+        self.monad = monad
 
         self.toplevel_commands = (
-            node
+            monad
             .oftype(gr.cif_file)
             .unroll()
             .oftype(gr.command)
@@ -111,7 +120,7 @@ class SemIR:
             )
 
         self.target_layer = (
-            node
+            monad
             .sole_child(gr.prim_command)
             .sole_child(gr.layer_command)
             .single_child(gr.shortname)
@@ -119,7 +128,7 @@ class SemIR:
             )
 
         self.called_symb = (
-            node
+            monad
             .sole_child(gr.prim_command)
             .sole_child(gr.call_command)
             .single_child(gr.integer)
@@ -128,7 +137,7 @@ class SemIR:
             )  # TODO transformation
 
         self.defined_symb = (
-            node
+            monad
             .single_child(gr.def_start_command)
             .single_child(gr.integer)
             .single_child(gr.integer_d)
@@ -136,10 +145,10 @@ class SemIR:
             )
 
         self.symb_commands = (
-            node
+            monad
             .single_child(gr.def_start_command)
             .and_(
-                node
+                monad
                 .unroll()
                 .oftype(gr.prim_command)
                 )
@@ -147,7 +156,7 @@ class SemIR:
             )
 
         self.points = (
-            node
+            monad
             .sole_child(gr.prim_command)
             .sole_child(gr.polygon_command)
             .single_child(gr.path)
@@ -166,16 +175,19 @@ class SemIR:
                     )
                 ))
             )
+    
+    def __repr__(self):
+        return ''.join((
+            '<SemIR',
+            f' {self.target_layer=}' if self.target_layer is not None else '',
+            f' {self.called_symb=}' if self.called_symb is not None else '',
+            f' {self.defined_symb=}' if self.defined_symb is not None else '',
+            f' {self.points=}' if self.points else '',
+            '>'
+            ))
 
 
     def eval(self, depth=0):
-        print(f"{'*'*depth}{self.toplevel_commands = }")
-        print(f"{'*'*depth}{self.target_layer = }")
-        print(f"{'*'*depth}{self.called_symb = }")
-        print(f"{'*'*depth}{self.defined_symb = }")
-        print(f"{'*'*depth}{self.points = }")
-        print(f"{'*'*depth}{self.symb_commands = }")
-        print()
         for node in self.toplevel_commands:
             monad = CSTMonad(node)
             child = type(self)(monad)
@@ -197,7 +209,7 @@ class SemIR:
             self.symb_children.append(child)
 
     def classify(self):
-        if self.toplevel_commands is not None:
+        if self.toplevel_commands:
             assert self.semtype is None
             self.semtype = SemType.FILE
 
@@ -213,22 +225,34 @@ class SemIR:
             assert self.semtype is None
             self.semtype = SemType.DEF
 
-        if self.points is not None:
+        if self.points:
             assert self.semtype is None
             self.semtype = SemType.POLY
 
         assert self.semtype is not None
 
-    def build(self):
+    def build(self, symbs = None):
+        if symbs is None:
+            symbs = {}
         layers = {}
 
         layer = None
-        for child in self.toplevel_commands:
+        for child in (*self.symb_children, *self.toplevel_children):
             if child.target_layer is not None:
                 layer = child.target_layer
+                layers[layer] = []
 
-            if child.points is not None:
+            if child.points:
                 assert layer is not None
+                layers[layer].append(child.points)
+
+            if child.defined_symb is not None:
+                symbs[child.defined_symb] = child.build(symbs)
+
+            if child.called_symb is not None:
+                merge_layers(layers, symbs[child.called_symb])
+
+        return layers
 
     def print(self):
         print('SemIR')

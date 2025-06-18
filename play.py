@@ -5,6 +5,7 @@ from os import system
 mycif="""
 L L000;
 DS 1;
+L L001;
 P 10 10 20 -30 -40 50;
 DF;
 C 1;
@@ -18,10 +19,11 @@ cst.compute_string()
 #cf.astextra.reduce(cst)
 Path('cst.gv').write_text(cf.astextra.get_dot(cst))
 system("sh -c 'dot -T png < cst.gv > cst.png'")
-cf.astextra.print_dot(cst)
+#cf.astextra.print_dot(cst)
 monad = cf.semir.CSTMonad(cst)
 semir = cf.semir.SemIR(monad)
 semir.eval()
+print(semir.build())
 ##semir.print()
 
 #mycif="""C 1;"""
