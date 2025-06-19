@@ -15,4 +15,7 @@ from cift.parser import Parser
 import cift.grammars
 import cift.astextra
 import cift.semir
+from cift.shorthand import parse
+from cift.shorthand import parse_string
+
 

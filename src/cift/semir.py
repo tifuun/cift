@@ -240,7 +240,8 @@ class SemIR:
         for child in (*self.symb_children, *self.toplevel_children):
             if child.target_layer is not None:
                 layer = child.target_layer
-                layers[layer] = []
+                if layer not in layers.keys():
+                    layers[layer] = []
 
             if child.points:
                 assert layer is not None
