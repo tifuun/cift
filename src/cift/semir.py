@@ -199,7 +199,7 @@ class SemIR:
                 box_monad
                 .unroll()
                 .oftype(gr.point)
-                .slice(0) # index 1 is rotation
+                .slice(0, 1) # index 1 is rotation
                 .unroll()
                 .oftype(gr.sinteger)
                 .mapn_wrap(2, lambda sint:  # TODO copypasta
