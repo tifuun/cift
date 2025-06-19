@@ -94,25 +94,25 @@ class TestPoly(unittest.TestCase, PrettyEqual):
                 },
             )
 
-    #def test_box(self):
-    #    layers = cf.parse(
-    #        "L TEST;\n"
-    #        "B 10 20 3 4;\n"
-    #        "E\n"
-    #        )
-    #    self.assertPrettyEqual(
-    #        layers,
-    #        {
-    #            'TEST': [
-    #                (
-    #                    (-10 // 2 + 3, -20 // 2 + 4),
-    #                    (+10 // 2 + 3, -20 // 2 + 4),
-    #                    (+10 // 2 + 3, +20 // 2 + 4),
-    #                    (-10 // 2 + 3, +20 // 2 + 4),
-    #                    ),
-    #                ]
-    #            },
-    #        )
+    def test_box(self):
+        layers = cf.parse(
+            "L TEST;\n"
+            "B 10 20 3 4;\n"
+            "E\n"
+            )
+        self.assertPrettyEqual(
+            layers,
+            {
+                'TEST': [
+                    (
+                        (-10 // 2 + 3, -20 // 2 + 4),
+                        (+10 // 2 + 3, -20 // 2 + 4),
+                        (+10 // 2 + 3, +20 // 2 + 4),
+                        (-10 // 2 + 3, +20 // 2 + 4),
+                        ),
+                    ]
+                },
+            )
 
     #def test_unrotated_box(self):
     #    layers = cf.parse(

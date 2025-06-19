@@ -155,6 +155,7 @@ class SemIR:
             .nodes
             )
 
+        # polygon
         self.points = (
             monad
             .sole_child(gr.prim_command)
@@ -175,6 +176,48 @@ class SemIR:
                     )
                 ))
             )
+
+        box_monad = (
+            monad
+            .sole_child(gr.prim_command)
+            .sole_child(gr.box_command)
+            )
+
+        if box_monad:
+            # TODO still some potential errors here if some
+            # constructs cst by hand,
+            # we need to go FULLY MONADIC!!!!
+            width, height = (
+                box_monad
+                .unroll()
+                .oftype(gr.integer)
+                .unroll()
+                .oftype(gr.integer_d)
+                .mapn(2, lambda node: int(node.string))
+                )
+            cx, cy = (
+                box_monad
+                .unroll()
+                .oftype(gr.point)
+                .slice(0) # index 1 is rotation
+                .unroll()
+                .oftype(gr.sinteger)
+                .mapn_wrap(2, lambda sint:  # TODO copypasta
+                    [1, -1][bool(sint.single_child(terminal))]  # minus sign
+                    *
+                    sint.single_child(gr.integer_d).mapsingle(
+                        lambda node: int(node.string)
+                        )
+                    )
+                )
+            # TODO rotation
+            self.points = (
+                (cx - width // 2, cy - height // 2),  # TODO rounding??
+                (cx + width // 2, cy - height // 2),
+                (cx + width // 2, cy + height // 2),
+                (cx - width // 2, cy + height // 2),
+                )
+
     
     def __repr__(self):
         return ''.join((
