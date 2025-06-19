@@ -210,12 +210,43 @@ class SemIR:
                         )
                     )
                 )
+
+            rx, ry = (  # TODO copypasta
+                box_monad
+                .unroll()
+                .oftype(gr.point)
+                .slice(1, 2) # index 1 is rotation
+                .unroll()
+                .oftype(gr.sinteger)
+                .mapn_wrap(2, lambda sint:  # TODO copypasta
+                    [1, -1][bool(sint.single_child(terminal))]  # minus sign
+                    *
+                    sint.single_child(gr.integer_d).mapsingle(
+                        lambda node: int(node.string)
+                        )
+                    )
+                ) or (1, 0)  # TODO spaghett
+
+            if rx == ry == 0:
+                print("box rotation == 0 0! Assuming you meant 1 0.")
+                # TODO actual warnings
+                rx, ty = 1, 0
+
+            urx = rx / (rx ** 2 + ry ** 2)**(1 / 2)
+            ury = ry / (rx ** 2 + ry ** 2)**(1 / 2)
+
+            def tform(x, y):
+                return (
+                    int(cx + urx * x - ury * y),
+                    int(cy + ury * x + urx * y),
+                    )
+
             # TODO rotation
             self.points = (
-                (cx - width // 2, cy - height // 2),  # TODO rounding??
-                (cx + width // 2, cy - height // 2),
-                (cx + width // 2, cy + height // 2),
-                (cx - width // 2, cy + height // 2),
+                tform(-width / 2, -height / 2),  # TODO rounding??
+                tform(+width / 2, -height / 2),
+                tform(+width / 2, +height / 2),
+                tform(-width / 2, +height / 2),
                 )
 
     
