@@ -17,13 +17,20 @@ Turning CIFT into a general-purpose CIF parser is a long-term future goal.
 
 ## Roadmap
 
+- [ ] Complete this roadmap
+- [ ] Parsing Variants
+    - [x] Strict (according to [^1] ) parsing
+    - [ ] Klayout-like parsing
+        - "lenient" layer names working,
+            unclear whether this corresponds 1:1 with kalyout
 - [ ] Basic parsing
-    - [x] `P` (polygons)
+    - [ ] `P` (polygons)
     - [ ] `B` (box)
         - [ ] rotation
     - [ ] Comments
+        - Maybe? Untested
     - [x] Subroutines (`DS` and `DF`)
-    - [x] Translation and rotation (subroutines)
+    - [ ] Translation and rotation (subroutines)
 - [ ] Inspection
     - [x] Get CIF file as a list of geometries on each layer
     - [ ] Get CIF file as a tree representing subroutine calls
@@ -32,8 +39,6 @@ Turning CIFT into a general-purpose CIF parser is a long-term future goal.
 - Pure Python, no dependencies
 - easy to understand code
 - `mypy --strict` has no complaints
-- in abscence of a CIF spec,
-emulate KLayout's CIF parser as closely as possible.
 
 ## Name
 - "CIFT", pronounced like "sift".
@@ -62,4 +67,13 @@ browsing the commit history.
 ---
 
 Copyright (c) 2025, maybetree.
+
+
+## Works Cited
+
+[^1]: Sproull, R., & Lyon, R. (1980).
+The caltech intermediate form for LSI layout description
+(Technical Report No. 2686).
+California Institute of Technology, Computer Science
+Department, Silicon Structures Project.
 

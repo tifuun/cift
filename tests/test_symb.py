@@ -102,6 +102,7 @@ class TestSymb(unittest.TestCase):
             )
 
     def test_symb_transform(self):
+        #cf.debug.crutch(
         layers = cf.parse(
             "DS 1 1 1;\n"
             "    L LONE;\n"
