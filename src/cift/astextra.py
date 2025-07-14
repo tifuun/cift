@@ -3,7 +3,7 @@
 from weakref import WeakKeyDictionary
 
 from cift.parser import CSTNode, Symbol
-from cift.grammars import strict as gr
+from cift import grammar as gr
 
 def escape_dot_label(s: str) -> str:
     """

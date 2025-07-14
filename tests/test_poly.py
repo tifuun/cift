@@ -56,6 +56,32 @@ class TestPoly(unittest.TestCase, PrettyEqual):
                 },
             )
 
+    def test_relaxed_multi_layer(self):
+        layers = cf.parse(
+            "L LONE;\n"
+            "P 10 10 10 20 30 30 10 30;\n"
+            "L Lroot;\n"
+            "P 10 10 10 20 30 30 10 30;\n"
+            "L XOne;\n"
+            "P 50 20 40 10 30 30 10 30;\n"
+            "L Y_r;\n"
+            "P 50 20 40 10 30 30 10 30;\n"
+            "L Kfoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoof;\n"
+            "P 60 20 40 10 30 30 10 30;\n"
+            "E\n",
+            grammar=cf.grammar.lenient_layers
+            )
+        self.assertPrettyEqual(
+            set(layers.keys()),
+            {
+                'LONE',
+                'Lroot',
+                'XOne',
+                'Y_r',
+                'Kfoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoof'
+                }
+            )
+
     def test_multi_layer(self):
         layers = cf.parse(
             "L LONE;\n"

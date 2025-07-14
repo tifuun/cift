@@ -1,10 +1,4 @@
 """
-grammars/strict.py: Strict definition of CIF grammar
-
-This file defines the CIF language as a context-free grammar
-exactly as described in
-R. Sproul, R. Lyon, "The Caltech Intermediate Form for LSI Layout Description,"
-Dept. Comp. Sci., California Inst. of Technology, Rep. 2686, 1980.
 """
 
 from cift.parser import Symbol, Seq, Or, Maybe, Many
@@ -50,7 +44,7 @@ blank = Symbol("blank")
 user_char = Symbol("user_char")
 comment_char = Symbol("comment_char")
 
-grammar = {
+strict = {
     cif_file: Seq(
         Many(
             Seq(Many(blank), Maybe(command), semi)
@@ -142,4 +136,15 @@ grammar = {
     comment_char: Or(*(ascii_all - set("()"))),
     }
 
+lenient_char = Symbol("lenient_char")
+lenient_layers = {
+    **strict,
+    shortname: Seq(lenient_char, Many(lenient_char)),
+    lenient_char: Or(*set(
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        "abcdefghijklmnopqrstuvwxyz"
+        "0123456789"
+        "-_"
+        ))
+    }
 

@@ -12,7 +12,7 @@ from cift.parser import Maybe
 from cift.parser import Many
 from cift.parser import CSTNode
 from cift.parser import Parser
-import cift.grammars
+import cift.grammar
 import cift.astextra
 import cift.semir
 from cift.shorthand import parse

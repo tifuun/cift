@@ -8,7 +8,7 @@ This file is not yet complete. Only some CIF commands are handled.
 from dataclasses import dataclass
 from enum import StrEnum
 
-from cift.grammars import strict as gr
+from cift import grammar as gr
 from cift.parser import terminal
 from cift.parser import CSTNode
 
