@@ -89,6 +89,9 @@ class CSTMonad:
     def single_child(self, symbol):
         return self.unroll().oftype(symbol).assert_len(1)
 
+    def first_child_of_type(self, symbol):
+        return self.unroll().oftype(symbol).slice(0)
+
     def singledispatch(self, *methods):
         return type(self)(*(
             method(type(self)(node))
@@ -136,10 +139,10 @@ class SemIR:
             .mapsingle(lambda node: int(node.string))
             )  # TODO transformation
 
-        self.defined_symb = (
+        self.defined_symb = (  # TODO scale currently ignored
             monad
             .single_child(gr.def_start_command)
-            .single_child(gr.integer)
+            .first_child_of_type(gr.integer)
             .single_child(gr.integer_d)
             .mapsingle(lambda node: int(node.string))
             )
@@ -325,13 +328,20 @@ class SemIR:
                 symbs[child.defined_symb] = child.build(symbs)
 
             if child.called_symb is not None:
-                merge_layers(layers, symbs[child.called_symb])
+                try:
+                    merge_layers(layers, symbs[child.called_symb])
+                except KeyError as err:
+                    # TODO custom error types? Or monadic handling?
+                    raise KeyError(
+                        f"Symbol {child.called_symb} has not been defined. "
+                        f"Defined symbols: {symbs.keys()} . "
+                        ) from err
 
         return layers
 
     def print(self):
         print('SemIR')
-        for child in self.commands:
+        for child in (*self.symb_children, *self.toplevel_children):
             print(child)
 
 
