@@ -90,7 +90,8 @@ class CSTMonad:
         return self.unroll().oftype(symbol).assert_len(1)
 
     def first_child_of_type(self, symbol):
-        return self.unroll().oftype(symbol).slice(0)
+        # TODO this slice thing is confusing, None is not None?
+        return self.unroll().oftype(symbol).slice(0, 1)
 
     def singledispatch(self, *methods):
         return type(self)(*(
