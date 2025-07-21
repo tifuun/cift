@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cift"
-version = "0.0.7"
+version = "0.1.0"
 description = """Caltech Intermediate Form parser in pure Python"""
 authors = [
 	{name = "maybetree", email = "maybetree48@proton.me"}
@@ -18,7 +18,4 @@ requires-python = ">=3"
 dependencies = [
     'typing-extensions',
 	]
-
-#[tool.setuptools.packages.find]
-#include = [ "pycif", "pycif.*" ]
 
