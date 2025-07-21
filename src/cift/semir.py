@@ -434,9 +434,11 @@ class SemIR:
 
         assert self.semtype is not None
 
-    def build(self, symbs = None):
-        if symbs is None:
-            symbs = {}
+    def build(self, symb_geom = None, symb_def = None):
+        if symb_geom is None:
+            symb_geom = {}
+        if symb_def is None:
+            symb_def = {}
         layers = {}
 
         layer = None
@@ -451,18 +453,26 @@ class SemIR:
                 layers[layer].append(child.points)
 
             if child.defined_symb is not None:
-                symbs[child.defined_symb] = child.build(symbs)
+                symb_def[child.defined_symb] = child
+                #symb_geom[child.defined_symb] = child.build(symb_geom, symb_def)
 
             if child.called_symb is not None:
                 # TODO recursion detection
-                try:
-                    merge_layers(layers, symbs[child.called_symb], child.transform)
-                except KeyError as err:
+
+                if (geom := symb_geom.get(child.called_symb, None)) is not None:
+                    merge_layers(layers, geom, child.transform)
+
+                elif (sdef := symb_def.get(child.called_symb, None)) is not None:
+                    geom = sdef.build(symb_geom, symb_def)
+                    symb_geom[child.called_symb] = geom
+                    merge_layers(layers, geom, child.transform)
+
+                else:
                     # TODO custom error types? Or monadic handling?
                     raise KeyError(
                         f"Symbol {child.called_symb} has not been defined. "
                         f"Defined symbols: {symbs.keys()} . "
-                        ) from err
+                        )
 
         return layers
 
