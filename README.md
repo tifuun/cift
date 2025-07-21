@@ -40,6 +40,15 @@ Turning CIFT into a general-purpose CIF parser is a long-term future goal.
 - easy to understand code
 - `mypy --strict` has no complaints
 
+## Contributing
+
+If you'd like to contribute code,
+please do so by making a fork, comitting your changes,
+and creating a pull request.
+
+We have unit tests.
+Run them with `python -m unittest` from the root of the repo.
+
 ## Name
 - "CIFT", pronounced like "sift".
 Think of putting a CIF file into a sieve

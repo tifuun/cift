@@ -277,7 +277,6 @@ class SemIR:
                     (('R', gr.point), parse_rotate)
                     ))
                 )
-            print(self.transform)
         else:
             self.transform = []
 
