@@ -101,6 +101,56 @@ class TestSymb(unittest.TestCase):
                 },
             )
 
+    def test_symb_rotate(self):
+        layers = cf.parse(
+            "DS 1 1 1;\n"
+            "    L LONE;\n"
+            "    P 0 0 0 10 10 0;\n"
+            "DF;\n"
+            "DS 2 1 1;\n"
+            "    Call symbol #1 Rotated to 0 -10;\n"
+            "DF;\n"
+            "C 2;\n"
+            "E\n"
+            )
+        self.assertEqual(
+            layers,
+            {
+                'LONE': [
+                    (
+                        (0 + 2, 0 + 3),
+                        (10 + 2, 0 + 3),
+                        (0 + 2, -10 + 3),
+                        ),
+                    ],
+                },
+            )
+
+    def test_symb_rotate(self):
+        layers = cf.parse(
+            "DS 1 1 1;\n"
+            "    L LONE;\n"
+            "    P 0 0 0 10 10 0;\n"
+            "DF;\n"
+            "DS 2 1 1;\n"
+            "    Call symbol #1 Translated to 2,3;\n"
+            "DF;\n"
+            "C 2;\n"
+            "E\n"
+            )
+        self.assertEqual(
+            layers,
+            {
+                'LONE': [
+                    (
+                        (0 + 2, 0 + 3),
+                        (0 + 2, 10 + 3),
+                        (10 + 2, 0 + 3),
+                        ),
+                    ],
+                },
+            )
+
     def test_symb_transform(self):
         cf.debug.crutch(
             "DS 1 1 1;\n"

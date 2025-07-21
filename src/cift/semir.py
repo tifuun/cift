@@ -25,16 +25,40 @@ def apply_transform(polys, transform):
     for poly in polys:
         for t in transform:
             if t[0] == 'T':
-                poly = [
+                poly = tuple(
                     (x + t[1][0], y + t[1][1])
                     for x, y in poly
-                    ]
+                    )
 
             elif t[0] == 'R':
-                pass
+
+                rx, ry = t[1]
+                cx, cy = 0, 0
+
+                # FIXME this is copypasta
+                if rx == ry == 0:
+                    print("box rotation == 0 0! Assuming you meant 1 0.")
+                    # TODO actual warnings
+                    rx, ty = 1, 0
+
+                urx = rx / (rx ** 2 + ry ** 2)**(1 / 2)
+                ury = ry / (rx ** 2 + ry ** 2)**(1 / 2)
+
+                def tform(x, y):
+                    return (
+                        int(cx + urx * x - ury * y),
+                        int(cy + ury * x + urx * y),
+                        )
+
+                poly = tuple(tform(x, y) for x, y in poly)
 
             elif t[0] == 'M':
-                pass
+                if t[1] == 'X':
+                    poly = tuple((x, -y) for x, y in poly)
+                elif t[1] == 'Y':
+                    poly = tuple((-x, y) for x, y in poly)
+                else:
+                    assert False
 
             else:
                 assert False
@@ -431,6 +455,7 @@ class SemIR:
                 symbs[child.defined_symb] = child.build(symbs)
 
             if child.called_symb is not None:
+                # TODO recursion detection
                 try:
                     merge_layers(layers, symbs[child.called_symb], child.transform)
                 except KeyError as err:
