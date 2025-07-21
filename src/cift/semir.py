@@ -9,14 +9,38 @@ from dataclasses import dataclass
 from enum import StrEnum
 
 from cift import grammar as gr
+from cift.parser import Symbol
 from cift.parser import terminal
 from cift.parser import CSTNode
 
-def merge_layers(dest, source):
+def merge_layers(dest, source, transform):
     for k, v in source.items():
         if k not in dest.keys():
             dest[k] = []
-        dest[k].extend(v)
+        v_t = apply_transform(v, transform)
+        dest[k].extend(v_t)
+
+def apply_transform(polys, transform):
+    new_polys = []
+    for poly in polys:
+        for t in transform:
+            if t[0] == 'T':
+                poly = [
+                    (x + t[1][0], y + t[1][1])
+                    for x, y in poly
+                    ]
+
+            elif t[0] == 'R':
+                pass
+
+            elif t[0] == 'M':
+                pass
+
+            else:
+                assert False
+
+        new_polys.append(poly)
+    return new_polys
 
 class CSTMonad:
     def __init__(self, *nodes):
@@ -41,6 +65,9 @@ class CSTMonad:
         if bool(self):
             return self
         return other
+    
+    def apply(self, func):
+        return func(self)
 
     def map(self, func):
         return tuple(map(func, self.nodes))
@@ -74,6 +101,13 @@ class CSTMonad:
             if node.symbol is symbol
             ))
 
+    def notoftype(self, symbol):
+        return type(self)(*(
+            node
+            for node in self.nodes
+            if node.symbol is not symbol
+            ))
+
     def assert_len(self, n):
         if len(self.nodes) == n:
             return self
@@ -99,12 +133,77 @@ class CSTMonad:
             for node in self.nodes
             )).unroll().assert_length(1)
 
+    def hmatch(self, patterns):
+        i = 0
+        results = []
+        while i < len(self.nodes):
+            for pattern, funct in patterns:
+                if _hmatch_single(pattern, self.nodes, i):
+                    # FIXME spaghett
+                    results.append(funct(*(self.nodes[i:i + len(pattern)])))
+                    i += len(pattern)
+                    break
+            else:
+                assert False, self.nodes
+                #return []
+        return results
+
+def _hmatch_single(pattern, nodes, i):
+    return all(
+        (
+            _hmatch_single_single(key, node)
+            for key, node in zip(
+                pattern,
+                nodes[i:i + len(pattern)],
+                strict=True
+                )
+            )
+        )
+
+def _hmatch_single_single(key, node):
+    if isinstance(key, str):
+        return node.string == key
+
+    if isinstance(key, Symbol):
+        return node.symbol is key
+
+    assert False
+
 class SemType(StrEnum):
     FILE = 'FILE'
     DEF = 'DEF'
     CALL = 'CALL'
     LAYER = 'LAYER'
     POLY = 'POLY'
+
+def parse_translate(_, point):
+    return ('T', parse_point(CSTMonad(point)))
+
+def parse_rotate(_, point):
+    return ('R', parse_point(CSTMonad(point)))
+
+def parse_mirror(_, node):
+    if node.string == 'X':
+        return ('M', 'X')
+
+    if node.string == 'Y':
+        return ('M', 'Y')
+
+    assert False
+
+def parse_point(monad):
+    return (
+        monad
+        .unroll()
+        .oftype(gr.sinteger)
+        .mapn_wrap(2, lambda sint:  # TODO copypasta
+            [1, -1][bool(sint.single_child(terminal))]  # minus sign
+            *
+            sint.single_child(gr.integer_d).mapsingle(
+                lambda node: int(node.string)
+                )
+            )
+        )
 
 @dataclass
 class SemIR:
@@ -138,7 +237,25 @@ class SemIR:
             .single_child(gr.integer)
             .single_child(gr.integer_d)
             .mapsingle(lambda node: int(node.string))
-            )  # TODO transformation
+            )
+
+        if self.called_symb is not None:
+            self.transform = (
+                monad
+                .sole_child(gr.prim_command)
+                .sole_child(gr.call_command)
+                .single_child(gr.transformation)
+                .unroll()
+                .notoftype(gr.blank)
+                .hmatch((
+                    (('T', gr.point), parse_translate),
+                    (('M', terminal), parse_mirror),
+                    (('R', gr.point), parse_rotate)
+                    ))
+                )
+            print(self.transform)
+        else:
+            self.transform = []
 
         self.defined_symb = (  # TODO scale currently ignored
             monad
@@ -204,15 +321,7 @@ class SemIR:
                 .unroll()
                 .oftype(gr.point)
                 .slice(0, 1) # index 1 is rotation
-                .unroll()
-                .oftype(gr.sinteger)
-                .mapn_wrap(2, lambda sint:  # TODO copypasta
-                    [1, -1][bool(sint.single_child(terminal))]  # minus sign
-                    *
-                    sint.single_child(gr.integer_d).mapsingle(
-                        lambda node: int(node.string)
-                        )
-                    )
+                .apply(parse_point)
                 )
 
             rx, ry = (  # TODO copypasta
@@ -220,16 +329,8 @@ class SemIR:
                 .unroll()
                 .oftype(gr.point)
                 .slice(1, 2) # index 1 is rotation
-                .unroll()
-                .oftype(gr.sinteger)
-                .mapn_wrap(2, lambda sint:  # TODO copypasta
-                    [1, -1][bool(sint.single_child(terminal))]  # minus sign
-                    *
-                    sint.single_child(gr.integer_d).mapsingle(
-                        lambda node: int(node.string)
-                        )
-                    )
-                ) or (1, 0)  # TODO spaghett
+                .apply(parse_point)
+                ) or (1, 0)
 
             if rx == ry == 0:
                 print("box rotation == 0 0! Assuming you meant 1 0.")
@@ -259,6 +360,7 @@ class SemIR:
             '<SemIR',
             f' {self.target_layer=}' if self.target_layer is not None else '',
             f' {self.called_symb=}' if self.called_symb is not None else '',
+            f' {self.transform=}' if self.transform else '',
             f' {self.defined_symb=}' if self.defined_symb is not None else '',
             f' {self.points=}' if self.points else '',
             '>'
@@ -330,7 +432,7 @@ class SemIR:
 
             if child.called_symb is not None:
                 try:
-                    merge_layers(layers, symbs[child.called_symb])
+                    merge_layers(layers, symbs[child.called_symb], child.transform)
                 except KeyError as err:
                     # TODO custom error types? Or monadic handling?
                     raise KeyError(

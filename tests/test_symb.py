@@ -102,7 +102,18 @@ class TestSymb(unittest.TestCase):
             )
 
     def test_symb_transform(self):
-        #cf.debug.crutch(
+        cf.debug.crutch(
+            "DS 1 1 1;\n"
+            "    L LONE;\n"
+            "    P 0 0 0 10 10 0;\n"
+            "DF;\n"
+            "DS 2 1 1;\n"
+            "    C 1 R 0 -1 T 2,3 MX then Translated to 3 2 Mirrored in Y;\n"
+            "DF;\n"
+            "C 2;\n"
+            "E\n",
+            cf.grammar.strict
+            )
         layers = cf.parse(
             "DS 1 1 1;\n"
             "    L LONE;\n"
