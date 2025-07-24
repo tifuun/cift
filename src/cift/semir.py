@@ -46,8 +46,8 @@ def apply_transform(polys, transform):
 
                 def tform(x, y):
                     return (
-                        int(cx + urx * x - ury * y),
-                        int(cy + ury * x + urx * y),
+                        cx + urx * x - ury * y,
+                        cy + ury * x + urx * y,
                         )
 
                 poly = tuple(tform(x, y) for x, y in poly)
@@ -365,6 +365,7 @@ class SemIR:
 
             def tform(x, y):
                 return (
+                    # TODO TODO are int()'s needed here!?!?!
                     int(cx + urx * x - ury * y),
                     int(cy + ury * x + urx * y),
                     )

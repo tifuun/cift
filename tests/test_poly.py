@@ -7,7 +7,7 @@ import cift as cf
 
 from .utils import PrettyEqual
 
-class TestPoly(unittest.TestCase, PrettyEqual):
+class TestPoly(PrettyEqual, unittest.TestCase):
 
     def test_single_poly(self):
         layers = cf.parse(
@@ -178,6 +178,79 @@ class TestPoly(unittest.TestCase, PrettyEqual):
                         ),
                     ]
                 },
+            )
+
+    def test_many_rotations(self):
+        """
+        Test that multiple nested rotations work correctly
+        """
+
+        layers = cf.parse("""
+            DS 1 1 1;
+            C 2 R 707 707  ;
+            DF;
+            DS 2 1 1;
+            C 3 ;
+            DF;
+            DS 3 1 1;
+            C 4 R 707 707  ;
+            DF;
+            DS 4 1 1;
+            C 5 ;
+            DF;
+            DS 5 1 1;
+            C 6 R 707 707  ;
+            DF;
+            DS 6 1 1;
+            C 7 ;
+            DF;
+            DS 7 1 1;
+            C 8 R 707 707  ;
+            DF;
+            DS 8 1 1;
+            C 9 ;
+            DF;
+            DS 9 1 1;
+            C 10 R 707 707  ;
+            DF;
+            DS 10 1 1;
+            C 11 ;
+            DF;
+            DS 11 1 1;
+            C 12 R 707 707  ;
+            DF;
+            DS 12 1 1;
+            C 13 ;
+            DF;
+            DS 13 1 1;
+            C 14  ;
+            DF;
+            DS 14 1 1;
+            C 15 ;
+            DF;
+            DS 15 1 1;
+            L TEST;
+            P  -10 -5  10 -5  10 5  -10 5  ;
+            DF;
+            C 1 ;
+            E
+            """)
+
+        self.assertGeomsEqualStrictPretty(
+            layers,
+            {
+                'TEST': [
+                    [
+                        # TODO I am personally not sure
+                        # whether this should be the correct order!!!!
+                        # Sit down and reason about it!!
+                        (-5, 10),
+                        (-5, -10),
+                        (5, -10),
+                        (5, 10),
+                        ],
+                    ]
+                }
             )
 
 
