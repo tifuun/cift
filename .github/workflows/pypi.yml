@@ -25,6 +25,8 @@ jobs:
           python-version: '3.12'
 
       - name: run script
+        env:
+          PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
         run: ./scripts/pypi.sh
 
 
